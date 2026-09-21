@@ -1,26 +1,42 @@
 import { IpcMain, Notification, BrowserWindow } from 'electron';
 
+export const activeNotifications = new Set<Notification>();
+
+export function restoreAndFocusWindow(win: BrowserWindow | null): void {
+  if (win && !win.isDestroyed()) {
+    if (win.isMinimized()) win.restore();
+    win.show();
+    win.focus();
+  }
+}
+
 export function setupNotificationHandlers(
   ipcMain: IpcMain,
   getMainWindow: () => BrowserWindow | null
 ): void {
-  ipcMain.handle('notify:send', async (_event, { title, body }: { title: string; body: string }) => {
+  ipcMain.handle('notify:send', async (_event, payload?: { title?: string; body?: string }) => {
     try {
       if (Notification.isSupported()) {
+        const title = payload?.title || 'KanbanGO!';
+        const body = payload?.body || '';
+
         const notification = new Notification({
-          title: title || 'KanbanGO!',
-          body: body || '',
+          title,
+          body,
           silent: false
         });
 
+        activeNotifications.add(notification);
+        const cleanup = (): void => {
+          activeNotifications.delete(notification);
+        };
+
         notification.on('click', () => {
-          const win = getMainWindow();
-          if (win && !win.isDestroyed()) {
-            if (win.isMinimized()) win.restore();
-            win.show();
-            win.focus();
-          }
+          cleanup();
+          restoreAndFocusWindow(getMainWindow());
         });
+
+        notification.on('close', cleanup);
 
         notification.show();
         return { success: true };
@@ -33,11 +49,6 @@ export function setupNotificationHandlers(
   });
 
   ipcMain.handle('app:restore', async () => {
-    const win = getMainWindow();
-    if (win && !win.isDestroyed()) {
-      if (win.isMinimized()) win.restore();
-      win.show();
-      win.focus();
-    }
+    restoreAndFocusWindow(getMainWindow());
   });
 }

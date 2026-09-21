@@ -1,6 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { IpcMain, BrowserWindow } from 'electron';
-import { setupNotificationHandlers } from '../src/main/notification';
+import {
+  setupNotificationHandlers,
+  restoreAndFocusWindow,
+  activeNotifications
+} from '../src/main/notification';
 import { Notification } from 'electron';
 
 const { mockConstructor, MockNotification, mockNotificationInstances } = vi.hoisted(() => {
@@ -54,6 +58,7 @@ describe('Main Process Notification and Window Restore IPC Handlers', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockNotificationInstances.length = 0;
+    activeNotifications.clear();
     mockConstructor.mockReset();
     MockNotification.isSupported.mockReturnValue(true);
 
@@ -78,8 +83,37 @@ describe('Main Process Notification and Window Restore IPC Handlers', () => {
     });
   });
 
+  describe('restoreAndFocusWindow helper', () => {
+    it('restores, shows, and focuses window when minimized', () => {
+      const win = createMockWindow({ isMinimized: vi.fn().mockReturnValue(true) });
+      restoreAndFocusWindow(win);
+
+      expect(win.restore).toHaveBeenCalledTimes(1);
+      expect(win.show).toHaveBeenCalledTimes(1);
+      expect(win.focus).toHaveBeenCalledTimes(1);
+    });
+
+    it('shows and focuses without restore when not minimized', () => {
+      const win = createMockWindow({ isMinimized: vi.fn().mockReturnValue(false) });
+      restoreAndFocusWindow(win);
+
+      expect(win.restore).not.toHaveBeenCalled();
+      expect(win.show).toHaveBeenCalledTimes(1);
+      expect(win.focus).toHaveBeenCalledTimes(1);
+    });
+
+    it('handles null or destroyed window gracefully', () => {
+      const destroyedWin = createMockWindow({ isDestroyed: vi.fn().mockReturnValue(true) });
+      expect(() => restoreAndFocusWindow(destroyedWin)).not.toThrow();
+      expect(destroyedWin.restore).not.toHaveBeenCalled();
+      expect(destroyedWin.show).not.toHaveBeenCalled();
+
+      expect(() => restoreAndFocusWindow(null)).not.toThrow();
+    });
+  });
+
   describe('notify:send handler', () => {
-    it('creates and displays a notification when supported', async () => {
+    it('creates and displays a notification when supported and retains in activeNotifications', async () => {
       setupNotificationHandlers(mockIpcMain, getMainWindow);
       const handler = handlers.get('notify:send')!;
 
@@ -95,13 +129,63 @@ describe('Main Process Notification and Window Restore IPC Handlers', () => {
       });
       expect(instance.show).toHaveBeenCalledTimes(1);
       expect(instance.on).toHaveBeenCalledWith('click', expect.any(Function));
+      expect(instance.on).toHaveBeenCalledWith('close', expect.any(Function));
+
+      // Notification is protected from GC in activeNotifications set
+      expect(activeNotifications.has(instance as any)).toBe(true);
     });
 
-    it('falls back to default title and empty body when not provided', async () => {
+    it('cleans up notification from activeNotifications on click', async () => {
+      setupNotificationHandlers(mockIpcMain, getMainWindow);
+      const handler = handlers.get('notify:send')!;
+
+      await handler({}, { title: 'Test', body: 'Body' });
+      const instance = mockNotificationInstances[0];
+      expect(activeNotifications.has(instance as any)).toBe(true);
+
+      const clickListener = instance.listeners['click'];
+      expect(clickListener).toBeDefined();
+      clickListener();
+
+      expect(activeNotifications.has(instance as any)).toBe(false);
+      expect(mockWindow?.show).toHaveBeenCalledTimes(1);
+    });
+
+    it('cleans up notification from activeNotifications on close', async () => {
+      setupNotificationHandlers(mockIpcMain, getMainWindow);
+      const handler = handlers.get('notify:send')!;
+
+      await handler({}, { title: 'Test', body: 'Body' });
+      const instance = mockNotificationInstances[0];
+      expect(activeNotifications.has(instance as any)).toBe(true);
+
+      const closeListener = instance.listeners['close'];
+      expect(closeListener).toBeDefined();
+      closeListener();
+
+      expect(activeNotifications.has(instance as any)).toBe(false);
+    });
+
+    it('falls back to default title and empty body when empty strings provided', async () => {
       setupNotificationHandlers(mockIpcMain, getMainWindow);
       const handler = handlers.get('notify:send')!;
 
       const result = await handler({}, { title: '', body: '' });
+
+      expect(result).toEqual({ success: true });
+      const instance = mockNotificationInstances[0];
+      expect(instance.options).toEqual({
+        title: 'KanbanGO!',
+        body: '',
+        silent: false
+      });
+    });
+
+    it('safely handles missing or undefined payload', async () => {
+      setupNotificationHandlers(mockIpcMain, getMainWindow);
+      const handler = handlers.get('notify:send')!;
+
+      const result = await handler({});
 
       expect(result).toEqual({ success: true });
       const instance = mockNotificationInstances[0];
@@ -121,6 +205,7 @@ describe('Main Process Notification and Window Restore IPC Handlers', () => {
 
       expect(result).toEqual({ success: false, reason: 'unsupported' });
       expect(mockNotificationInstances.length).toBe(0);
+      expect(activeNotifications.size).toBe(0);
     });
 
     it('restores, shows, and focuses window when notification is clicked and window is minimized', async () => {
@@ -133,7 +218,6 @@ describe('Main Process Notification and Window Restore IPC Handlers', () => {
       await handler({}, { title: 'Test', body: 'Body' });
       const instance = mockNotificationInstances[0];
       const clickListener = instance.listeners['click'];
-      expect(clickListener).toBeDefined();
 
       clickListener();
 

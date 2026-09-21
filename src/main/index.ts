@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain, dialog, Notification } from 'electron';
+import { app, shell, BrowserWindow, ipcMain, dialog } from 'electron';
 import { join } from 'path';
 import { electronApp, optimizer, is } from '@electron-toolkit/utils';
 import { setupNotificationHandlers } from './notification';
@@ -65,13 +65,6 @@ app.whenReady().then(() => {
 
   ipcMain.on('window:close', () => {
     mainWindow?.close();
-  });
-
-  // Native Notification IPC
-  ipcMain.on('notification:send', (_, { title, body }) => {
-    if (Notification.isSupported()) {
-      new Notification({ title, body }).show();
-    }
   });
 
   // Native File Dialogs
