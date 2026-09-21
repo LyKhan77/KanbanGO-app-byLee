@@ -8,7 +8,7 @@ export async function seedInitialData(db: KanbanGODB): Promise<void> {
   const boardId = 'welcome-board';
   const defaultBoard: Board = {
     id: boardId,
-    title: '?? Welcome to KanbanGO!',
+    title: 'Welcome to KanbanGO!',
     description: 'Papan panduan awal & inspirasi kerja mindful',
     createdAt: Date.now(),
     updatedAt: Date.now(),

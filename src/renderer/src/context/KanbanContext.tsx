@@ -74,7 +74,8 @@ export const KanbanProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
   const refreshData = async () => {
     await seedInitialData(db);
-    const allBoards = await db.boards.where('isArchived').equals(0).sortBy('createdAt');
+    const rawBoards = await db.boards.toArray();
+    const allBoards = rawBoards.filter((b) => !b.isArchived).sort((a, b) => a.createdAt - b.createdAt);
     setBoards(allBoards);
 
     const settings = await db.settings.get('default');
