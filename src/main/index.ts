@@ -1,6 +1,7 @@
 import { app, shell, BrowserWindow, ipcMain, dialog, Notification } from 'electron';
 import { join } from 'path';
 import { electronApp, optimizer, is } from '@electron-toolkit/utils';
+import { setupNotificationHandlers } from './notification';
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -45,6 +46,9 @@ app.whenReady().then(() => {
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window);
   });
+
+  // Native Notification & Window Restore IPC Handlers
+  setupNotificationHandlers(ipcMain, () => mainWindow);
 
   // Window Controls IPC
   ipcMain.on('window:minimize', () => {
