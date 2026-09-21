@@ -1,4 +1,5 @@
 import { Card, Column, UserProfile } from '../../../shared/types';
+import { getTodayDateString } from './scheduler';
 
 export interface DailyBriefing {
   urgency: 'high' | 'medium' | 'low';
@@ -18,7 +19,7 @@ export function generateDailyBriefing(
   cards: Card[],
   columns: Column[]
 ): DailyBriefing {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = getTodayDateString(new Date());
 
   // Detect Done columns (title contains 'done', 'selesai', 'harvest', or highest order)
   const sortedCols = [...columns].sort((a, b) => a.order - b.order);

@@ -5,6 +5,7 @@ import { ColumnView } from './ColumnView';
 import { Card } from '../../../shared/types';
 import { DailyBriefingBanner } from '../assistant/DailyBriefingBanner';
 import { generateDailyBriefing } from '../../utils/assistantEngine';
+import { getTodayDateString } from '../../utils/scheduler';
 import { Search, Plus, Filter, Sparkles, Feather } from 'lucide-react';
 
 interface BoardCanvasProps {
@@ -37,7 +38,7 @@ export const BoardCanvas: React.FC<BoardCanvasProps> = ({ onCardClick }) => {
   const [newColumnTitle, setNewColumnTitle] = useState('');
   const [isBriefingDismissed, setIsBriefingDismissed] = useState(false);
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = getTodayDateString(new Date());
   const showBriefing =
     assistantConfig.isEnabled &&
     !isBriefingDismissed &&

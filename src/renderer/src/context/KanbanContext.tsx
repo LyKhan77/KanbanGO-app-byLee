@@ -73,6 +73,7 @@ export const KanbanProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPriority, setSelectedPriority] = useState('all');
   const [selectedTag, setSelectedTag] = useState('all');
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const refreshData = async () => {
     await seedInitialData(db);
@@ -92,6 +93,7 @@ export const KanbanProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     } else if (allBoards.length > 0) {
       setActiveBoardIdState(allBoards[0].id);
     }
+    setIsInitialized(true);
   };
 
   useEffect(() => {
@@ -336,11 +338,11 @@ export const KanbanProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   };
 
   const updateAssistantConfig = async (updates: Partial<AssistantConfig>) => {
-    const updated = { ...assistantConfig, ...updates };
-    setAssistantConfig(updated);
+    setAssistantConfig((prev) => ({ ...prev, ...updates }));
     const existing = await db.settings.get('default');
     if (existing) {
-      await db.settings.update('default', { assistant: updated });
+      const mergedAssistant = { ...(existing.assistant || DEFAULT_ASSISTANT), ...updates };
+      await db.settings.update('default', { assistant: mergedAssistant });
     }
   };
 
@@ -365,6 +367,8 @@ export const KanbanProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   });
 
   useEffect(() => {
+    if (!isInitialized) return;
+
     const checkReminder = () => {
       const { profile, cards, columns, assistantConfig, updateAssistantConfig } = stateRef.current;
       const now = new Date();
@@ -388,7 +392,7 @@ export const KanbanProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     checkReminder();
     const intervalId = setInterval(checkReminder, 30000);
     return () => clearInterval(intervalId);
-  }, []);
+  }, [isInitialized]);
 
   useEffect(() => {
     if (!window.electronAPI?.onTriggerBriefingFromTray) return;
