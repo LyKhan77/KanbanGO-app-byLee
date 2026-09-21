@@ -1,7 +1,9 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { db } from '../db/db';
 import { seedInitialData } from '../db/seed';
 import { Board, Column, Card, ChecklistItem, UserProfile, AssistantConfig } from '../../../shared/types';
+import { shouldTriggerDailyBriefing, getTodayDateString, getCurrentTimeString } from '../utils/scheduler';
+import { generateDailyBriefing } from '../utils/assistantEngine';
 
 interface KanbanContextType {
   boards: Board[];
@@ -341,6 +343,59 @@ export const KanbanProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       await db.settings.update('default', { assistant: updated });
     }
   };
+
+  const stateRef = useRef({ profile, cards, columns, assistantConfig, updateAssistantConfig });
+  useEffect(() => {
+    stateRef.current = { profile, cards, columns, assistantConfig, updateAssistantConfig };
+  });
+
+  useEffect(() => {
+    const checkReminder = () => {
+      const { profile, cards, columns, assistantConfig, updateAssistantConfig } = stateRef.current;
+      const now = new Date();
+      const todayDate = getTodayDateString(now);
+      const currentTime = getCurrentTimeString(now);
+
+      if (
+        shouldTriggerDailyBriefing({
+          isEnabled: assistantConfig.isEnabled,
+          reminderTime: assistantConfig.reminderTime,
+          lastBriefingDate: assistantConfig.lastBriefingDate,
+          todayDate,
+          currentTime
+        })
+      ) {
+        const briefing = generateDailyBriefing(profile, cards, columns);
+        if (briefing && window.electronAPI?.showNotification) {
+          window.electronAPI.showNotification({
+            title: `🔥 Hardcore Coach: ${briefing.headline}`,
+            body: briefing.message
+          });
+        }
+        updateAssistantConfig({ lastBriefingDate: todayDate });
+      }
+    };
+
+    const intervalId = setInterval(checkReminder, 30000);
+    return () => clearInterval(intervalId);
+  }, []);
+
+  useEffect(() => {
+    if (!window.electronAPI?.onTriggerBriefingFromTray) return;
+    const unsubscribe = window.electronAPI.onTriggerBriefingFromTray(() => {
+      const { profile, cards, columns } = stateRef.current;
+      const briefing = generateDailyBriefing(profile, cards, columns);
+      if (briefing && window.electronAPI?.showNotification) {
+        window.electronAPI.showNotification({
+          title: `🔥 Hardcore Coach: ${briefing.headline}`,
+          body: briefing.message
+        });
+      }
+    });
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
   const activeBoard = boards.find((b) => b.id === activeBoardId) || null;
 
