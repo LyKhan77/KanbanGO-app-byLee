@@ -1,51 +1,89 @@
 # Spesifikasi Desain: KanbanGO! Desktop Application
 
 **Tanggal:** 2026-09-21  
-**Status:** Draf Tinjauan  
+**Status:** Draf Tinjauan (Revisi 2: Tambahan Persona Profile, Hardcore Assistant, & Dukungan Multi-OS)  
 **Penulis:** Antigravity & User  
 **Tema Estetika:** Bohemian (Boho Chic / Warm Organic)  
-**Platform:** Desktop (Electron + React + TypeScript)
+**Platform:** Cross-Platform Desktop (Windows, macOS, Linux via Electron + React + TypeScript)
 
 ---
 
 ## 1. Ringkasan Eksekutif & Tujuan Proyek
 
-**KanbanGO!** adalah aplikasi manajemen tugas Kanban berbasis desktop yang dirancang khusus dengan filosofi **100% Offline-First** dan berbalut estetika **Bohemian (Boho Chic / Warm Organic)**. Berbeda dengan aplikasi manajemen proyek korporat yang kaku dan serba putih-biru, KanbanGO! menghadirkan pengalaman kerja yang hangat, tenang (*mindful productivity*), dan estetis tanpa mengorbankan kecepatan, keandalan, dan privasi data lokal pengguna.
+**KanbanGO!** adalah aplikasi manajemen tugas Kanban berbasis desktop yang dirancang dengan filosofi **100% Offline-First**, berbalut estetika **Bohemian (Boho Chic / Warm Organic)**, serta dilengkapi **Hardcore Personal Productivity Assistant**. Berbeda dengan aplikasi manajemen proyek korporat yang kaku dan serba putih-biru, KanbanGO! menghadirkan pengalaman kerja yang hangat, menenangkan secara visual (*mindful productivity*), namun memiliki asisten harian yang tegas dan disiplin untuk menjaga fokus pengguna.
 
 ### Tujuan Utama
-1. **Privasi & Kecepatan Mutlak**: Beroperasi 100% offline secara lokal di komputer pengguna tanpa perlu registrasi akun, login, atau koneksi internet.
-2. **Kenyamanan Visual (Bohemian Aesthetics)**: Menggunakan palet warna earthy (terracotta, sage green, linen, sand) dan tipografi dual-engine (serif untuk headings dan sans-serif tajam untuk isi tugas) yang mengurangi ketegangan mata.
-3. **Organisasi Fleksibel**: Mendukung pengelolaan banyak papan kerja (*Multi-Board*), penataan kolom yang sepenuhnya dapat dikustomisasi (*customizable columns*), dan fitur esensial kartu tugas (prioritas, tenggat waktu, tag warna, serta checklist sub-tugas).
-4. **Interaktivitas Hidup & Natural**: Menggantikan seluruh emoji dengan ikon vektor SVG elegan (*Lucide Icons*) serta dilengkapi animasi pergerakan natural bertema organik.
+1. **Privasi & Kecepatan Mutlak**: Beroperasi 100% offline di komputer pengguna tanpa perlu registrasi akun, server cloud, atau koneksi internet.
+2. **Kenyamanan Visual (Bohemian Aesthetics)**: Menggunakan palet warna earthy (terracotta, sage green, linen, sand) dan tipografi dual-engine (serif untuk headings dan sans-serif tajam untuk isi tugas) yang ramah di mata.
+3. **Cross-Platform Sejati**: Mendukung sistem operasi **Windows**, **macOS**, dan **Linux** secara penuh dari satu basis kode terpadu.
+4. **Persona Profile & Hardcore Daily Reminder**: Profil personal (nama & avatar) yang disapa setiap hari oleh *Hardcore Interactive Assistant*—mesin analisis harian lokal tanpa ketergantungan API cloud yang membedah board pengguna dan memberikan dorongan disiplin tegas.
+5. **Interaktivitas Hidup & Natural**: Menggantikan seluruh emoji dengan ikon vektor SVG elegan (*Lucide Icons*) serta animasi pergerakan natural bertema organik.
 
 ---
 
-## 2. Riset & Arsitektur Tech Stack
+## 2. Dukungan Sistem Operasi (Cross-Platform Support)
 
-### Pilihan Teknologi Terpilih
-Berdasarkan analisis kesiapan lingkungan sistem (tersedianya Node.js v24 dan npm v10), arsitektur yang dipilih adalah:
+Aplikasi **KanbanGO!** mendukung tiga platform desktop utama secara native melalui packaging `electron-builder`:
+
+| Sistem Operasi | Format Distribusi Output | Keterangan Dukungan |
+|---|---|---|
+| **Windows** | `.exe` (NSIS Installer) & Portable `.exe` | Dukungan Windows 10/11 64-bit, terintegrasi dengan notifikasi native Windows Toast. |
+| **macOS** | `.dmg` & `.app` (Universal Binary) | Mendukung chip Apple Silicon (M1/M2/M3/M4) dan Intel x64, terintegrasi dengan Apple Notification Center & dark/light chrome. |
+| **Linux** | `.AppImage`, `.deb`, `.rpm` | Mendukung distribusi Ubuntu/Debian, Fedora, Arch, dan distro Linux modern lainnya dengan freedesktop notifications. |
+
+Seluruh logika UI (React, Dexie.js, Tailwind, CSS) dan logika desktop (IPC, sistem file lokal) berjalan secara konsisten dan identik di ketiga OS tersebut.
+
+---
+
+## 3. Riset & Arsitektur Tech Stack
 
 | Komponen | Teknologi | Alasan Pemilihan |
 |---|---|---|
-| **Runtime Desktop** | Electron | Menghadirkan kapabilitas aplikasi desktop native (window state, IPC file access, menu) dengan kestabilan tinggi di Windows/macOS/Linux. |
-| **Build Tool & Bundler** | Vite + electron-vite | Menyediakan *Hot Module Replacement* (HMR) berkecepatan tinggi dan konfigurasi terintegrasi antara proses main, preload, dan renderer. |
-| **UI Framework** | React 18 / 19 + TypeScript | Ekosistem komponen matang, type-safety ketat, dan pengelolaan state reaktif yang teruji. |
-| **Mesin Styling** | Tailwind CSS | Konfigurasi mudah untuk custom design tokens bertema Bohemian dan responsive utility classes. |
-| **Drag & Drop Engine** | `@hello-pangea/dnd` | Fork resmi dan aktif dari react-beautiful-dnd dengan performa drag-and-drop kartu terbaik, fluid physics, dan aksesibilitas keyboard. |
-| **Sistem Ikon** | `lucide-react` | Paket ikon vektor SVG bersih, konsisten, bergaris halus (*stroke 1.75px*), menggantikan emoji mentah. |
-| **Mesin Animasi** | Framer Motion & CSS Springs | Menghasilkan pergerakan natural, riak partikel kelopak daun saat tugas selesai, dan efek tinta goresan checklist. |
-| **Penyimpanan Lokal** | Dexie.js (IndexedDB Native) | Database ACID offline-first berkecepatan tinggi, tanpa risiko kompilasi binary C++ (*zero native build mismatch*), mendukung indexing dan export/import JSON. |
-| **Validasi Skema** | Zod | Memvalidasi integritas file cadangan JSON sebelum dimasukkan ke database untuk mencegah korupsi data. |
+| **Runtime Desktop** | Electron | Menghadirkan kapabilitas cross-platform native (window state, IPC file access, native notifications). |
+| **Build Tool & Bundler** | Vite + electron-vite | *Hot Module Replacement* (HMR) kilat dan konfigurasi terintegrasi antara proses main, preload, dan renderer. |
+| **UI Framework** | React 18 / 19 + TypeScript | Ekosistem komponen matang, type-safety ketat, dan pengelolaan state reaktif. |
+| **Mesin Styling** | Tailwind CSS | Pengelolaan desain kustom bertema Bohemian dan utility classes modular. |
+| **Drag & Drop Engine** | `@hello-pangea/dnd` | Performa drag-and-drop kartu terbaik, fluid physics, dan aksesibilitas keyboard. |
+| **Sistem Ikon** | `lucide-react` | Paket ikon vektor SVG bersih, konsisten, bergaris halus (*stroke 1.75px*), bebas emoji mentah. |
+| **Mesin Animasi** | Framer Motion & CSS Springs | Pergerakan natural, partikel kelopak daun saat tugas selesai, dan efek goresan tinta checklist. |
+| **Penyimpanan Lokal** | Dexie.js (IndexedDB Native) | Database ACID offline-first berkecepatan tinggi, tanpa risiko kompilasi binary C++, mendukung indexing dan backup JSON. |
+| **Mesin Asisten Lokal** | Local Heuristic Rules Engine | Mesin analisis offline berbasis aturan cerdas yang memproses data tenggat waktu, prioritas, dan stagnasi kartu tanpa cloud. |
+| **Validasi Skema** | Zod | Memvalidasi integritas file cadangan JSON sebelum dipulihkan ke database. |
 | **Pengujian** | Vitest + React Testing Library | Framework pengujian cepat dan modern untuk unit testing logic serta component testing. |
 
 ---
 
-## 3. Sistem Desain Bohemian (Visual Identity & Motion)
+## 4. Fitur Utama & Inovasi Baru
 
-### 3.1 Token Palet Warna Bohemian
+### 4.1 Persona Profile (Profil Pengguna & Avatar)
+* **Atribut Profil**: Pengguna dapat menentukan **Nama Pengguna** (misal: "Lee"), **Role/Title** (misal: "Creator", "Builder", "Developer"), serta memilih **Avatar Karakter**.
+* **Pilihan Avatar Bohemian**: Koleksi avatar vektor berkarakter natural/fauna mistis (Rubah Hutan, Burung Hantu Bijak, Rusa, Kucing Liar, Daun Ginkgo, Pena Bulu) atau opsi unggah foto lokal mandiri.
+* **Integrasi**: Profil pengguna terpampang di pojok bawah sidebar dan menjadi subjek sapaan personal dari Hardcore Assistant.
+
+### 4.2 Hardcore Daily Reminder & Interactive Assistant (100% Offline)
+* **Filosofi "Hardcore Coach"**:
+  Asisten ini tidak bersikap pasif atau formal membosankan, melainkan bertindak seperti *ruthless personal productivity coach* yang tegas, fokus, dan memotivasi tanpa basa-basi.
+* **Mesin Analisis Board Lokal (Heuristic Engine)**:
+  Setiap hari saat aplikasi dibuka (atau pada jadwal waktu yang ditentukan, default: pukul 09:00), asisten memindai database lokal:
+  1. *Overdue Scanner*: Mendeteksi tugas yang melewati tenggat waktu.
+  2. *High Priority Stagnation*: Mendeteksi tugas prioritas tinggi yang masih tertahan di kolom To Do/Backlog tanpa progres.
+  3. *Momentum Tracker*: Menghitung rasio kartu selesai hari ini/minggu ini untuk memberikan dorongan semangat.
+* **Karakter Percakapan & Briefing Harian**:
+  * *Contoh 1 (Jika ada tugas kritis tertunda)*: *"Waktu tidak menunggu, [Nama]! Ada 2 tugas kritis yang tenggatnya hari ini, termasuk '[Judul Tugas]'. Jangan sentuh hal sepele sebelum ini tuntas. Buka fokus sekarang!"*
+  * *Contoh 2 (Jika semua tugas lancar)*: *"Papan bersih, [Nama]. Kamu mengeksekusi 3 tugas kemarin dengan rapi. Jangan berpuas diri, pilih target berikutnya di Backlog dan eksekusi sekarang."*
+  * *Contoh 3 (Jika banyak kartu menumpuk)*: *"Kolom To Do kamu terlalu penuh (7 kartu)! Hentikan menambah tugas baru, mulai bersihkan satu per satu!"*
+* **Bentuk Antarmuka Asisten**:
+  * **Daily Briefing Banner**: Muncul anggun di bagian atas board saat pertama kali dibuka pada hari itu, dapat ditutup (*dismiss*) atau langsung klik tombol `[Fokus Tugas Ini]` untuk langsung membuka kartu terkait.
+  * **Native OS Desktop Notification**: Memunculkan notifikasi sistem operasi di pojok layar komputer pada jam yang dijadwalkan.
+
+---
+
+## 5. Sistem Desain Bohemian (Visual Identity & Motion)
+
+### 5.1 Token Palet Warna Bohemian
 ```css
 :root {
-  /* Earthy Terracotta (Aksen Aksi Utama & Peringatan) */
+  /* Earthy Terracotta (Aksen Aksi Utama, Peringatan & Hardcore Callout) */
   --color-terracotta-primary: #c86d51;
   --color-terracotta-deep: #8c4c36;
   --color-terracotta-light: #faede9;
@@ -78,17 +116,18 @@ Berdasarkan analisis kesiapan lingkungan sistem (tersedianya Node.js v24 dan npm
 }
 ```
 
-### 3.2 Tipografi Dual-Engine
+### 5.2 Tipografi Dual-Engine
 * **Serif Headings (`Georgia, Playfair Display, serif`)**: Digunakan untuk judul board, nama kolom, label modal, dan heading utama untuk membangkitkan kesan artistik dan sastrawi.
 * **Modern Sans-Serif (`Inter, system-ui, sans-serif`)**: Digunakan untuk teks isi kartu tugas, deskripsi panjang, input formulir, dan rincian checklist agar kenyamanan membaca tetap maksimal.
 
-### 3.3 Sistem Ikon Vektor (`lucide-react`)
-Menggantikan seluruh emoji karakter dengan ikon vektor profesional:
+### 5.3 Sistem Ikon Vektor (`lucide-react`)
+Menggantikan seluruh emoji karakter dengan ikon vektor profesional bergaris halus (*stroke 1.75px*):
 * **Board & Proyek**: `<FolderKanban />`, `<LayoutDashboard />`, `<BookOpen />`, `<Feather />`, `<Compass />`.
 * **Kolom & Alur**: `<Layers />`, `<CircleDot />`, `<Clock />`, `<CheckCircle2 />`, `<MoreVertical />`.
 * **Kartu & Metadata**: `<Calendar />`, `<Tag />`, `<ListTodo />`, `<AlertCircle />`, `<CheckSquare />`, `<Plus />`, `<Trash2 />`, `<Edit3 />`.
+* **Persona & Asisten**: `<User />`, `<Sparkles />`, `<Flame />`, `<ShieldAlert />`, `<Bell />`.
 
-### 3.4 Desain Gerak & Animasi Organik (Natural Motion)
+### 5.4 Desain Gerak & Animasi Organik (Natural Motion)
 1. **Organic Spring Drag & Drop**: Saat kartu diangkat untuk digeser, kartu membesar lembut (*scale: 1.02*), miring 1.5° mengikuti momentum kursor, dan menghasilkan bayangan lembut bergaya *diffused warm sunlight* (`box-shadow: 0 14px 28px rgba(59,50,42,0.12)`).
 2. **Ink-Fill Checklist Stroke**: Saat sub-tugas dicentang, garis coret dan ikon centang menganimasikan goresan tinta mengalir (*SVG stroke-dashoffset transition*) 200ms.
 3. **Gentle Leaf Completion Ripple**: Ketika kartu dipindahkan ke kolom paling akhir (*Done/Harvested*), muncul riak partikel daun/kelopak bernuansa terracotta & sage green yang melayang lembut selama 1.2 detik.
@@ -96,74 +135,29 @@ Menggantikan seluruh emoji karakter dengan ikon vektor profesional:
 
 ---
 
-## 4. Struktur Direktori Proyek
-
-```text
-KanbanGo2/
-├── docs/
-│   └── superpowers/
-│       └── specs/
-│           └── 2026-09-21-kanbango-desktop-design.md
-├── src/
-│   ├── main/
-│   │   ├── index.ts               # Inisialisasi jendela Electron & lifecycle
-│   │   ├── windowManager.ts       # Manajemen state ukuran dan posisi window
-│   │   └── ipc/
-│   │       ├── backupHandlers.ts  # Export & import file JSON lokal
-│   │       └── dialogHandlers.ts  # Native OS file dialogs
-│   ├── preload/
-│   │   ├── index.ts               # Secure contextBridge exposure
-│   │   └── index.d.ts             # Tipe window.electronAPI
-│   ├── renderer/
-│   │   ├── src/
-│   │   │   ├── assets/            # Aset grafis & font
-│   │   │   ├── components/
-│   │   │   │   ├── layout/
-│   │   │   │   │   ├── WindowHeader.tsx  # Custom titlebar & window controls
-│   │   │   │   │   └── Sidebar.tsx       # Board vault & collapsible navigation
-│   │   │   │   ├── board/
-│   │   │   │   │   ├── BoardCanvas.tsx   # Canvas scroll horizontal
-│   │   │   │   │   ├── BoardHeader.tsx   # Judul board, search bar, add column
-│   │   │   │   │   ├── ColumnView.tsx    # Droppable column container
-│   │   │   │   │   └── CardItem.tsx      # Draggable card item
-│   │   │   │   ├── modal/
-│   │   │   │   │   ├── CardDetailModal.tsx # Form edit kartu, checklist, due date
-│   │   │   │   │   └── BoardModal.tsx      # Modal buat/edit board
-│   │   │   │   └── common/
-│   │   │   │       ├── Badge.tsx         # Bohemian priority & tag chips
-│   │   │   │       ├── Button.tsx        # Styled organic buttons
-│   │   │   │       ├── ErrorBoundary.tsx # Fallback crash protection
-│   │   │   │       └── Toast.tsx         # Bohemian alert toasts
-│   │   │   ├── db/
-│   │   │   │   ├── db.ts          # Definisi Dexie.js database
-│   │   │   │   └── seed.ts        # Data awal demonstrasi (Welcome Board)
-│   │   │   ├── hooks/
-│   │   │   │   ├── useKanban.ts   # State management utama (CRUD boards, cols, cards)
-│   │   │   │   └── useFilter.ts   # Logika pencarian & filter kartu
-│   │   │   ├── types/
-│   │   │   │   └── kanban.ts      # TypeScript interfaces
-│   │   │   ├── styles/
-│   │   │   │   └── index.css      # Tailwind imports & Bohemian CSS custom properties
-│   │   │   ├── App.tsx            # Root component layout
-│   │   │   └── main.tsx           # React DOM root entry
-│   │   └── index.html
-│   └── shared/
-│       └── types.ts               # IPC interface types & data models
-├── electron.vite.config.ts        # Konfigurasi terpadu Vite
-├── package.json
-└── tsconfig.json
-```
-
----
-
-## 5. Skema Data & Model Entitas
-
-### 5.1 Definisi Database Dexie.js
-Database lokal diberi nama `KanbanGODatabase` dengan skema versi 1:
+## 6. Skema Data & Model Entitas
 
 ```typescript
 // src/shared/types.ts
 
+// 1. Profil Pengguna (Persona)
+export interface UserProfile {
+  id: string;               // 'profile-default'
+  name: string;             // misal: "Lee"
+  roleTitle: string;        // misal: "Lead Craftsman"
+  avatarId: string;         // 'fox' | 'owl' | 'deer' | 'ginkgo' | 'custom'
+  customAvatarUrl?: string; // Data URL jika upload lokal
+}
+
+// 2. Konfigurasi Asisten Harian
+export interface AssistantConfig {
+  isEnabled: boolean;
+  reminderTime: string;     // format "09:00"
+  tone: 'hardcore' | 'balanced' | 'gentle'; // Default: 'hardcore'
+  lastBriefingDate?: string;// YYYY-MM-DD (mencegah spam berkali-kali di hari sama)
+}
+
+// 3. Entitas Papan Kerja (Board)
 export interface Board {
   id: string;             // UUID v4
   title: string;          // Judul board, misal: "Pekerjaan Studio", "Karya Tulis"
@@ -173,6 +167,7 @@ export interface Board {
   isArchived: boolean;
 }
 
+// 4. Entitas Kolom Status (Column)
 export interface Column {
   id: string;             // UUID v4
   boardId: string;        // Relasi ke Board.id
@@ -181,6 +176,7 @@ export interface Column {
   accentColor?: string;   // Warna badge kolom
 }
 
+// 5. Entitas Kartu Tugas (Card)
 export interface Card {
   id: string;             // UUID v4
   boardId: string;        // Relasi ke Board.id (untuk kueri cepat)
@@ -195,6 +191,7 @@ export interface Card {
   updatedAt: number;
 }
 
+// 6. Entitas Sub-Tugas (ChecklistItem)
 export interface ChecklistItem {
   id: string;             // UUID v4
   cardId: string;         // Relasi ke Card.id
@@ -203,14 +200,17 @@ export interface ChecklistItem {
   order: number;          // Urutan sub-tugas
 }
 
+// 7. Pengaturan Sistem
 export interface UserSettings {
   id: string;             // 'default'
   activeBoardId?: string;
   isSidebarCollapsed: boolean;
+  profile: UserProfile;
+  assistant: AssistantConfig;
 }
 ```
 
-### 5.2 Pengindeksan Dexie (`src/renderer/src/db/db.ts`)
+### Pengindeksan Dexie (`src/renderer/src/db/db.ts`)
 ```typescript
 import Dexie, { Table } from 'dexie';
 import { Board, Column, Card, ChecklistItem, UserSettings } from '@shared/types';
@@ -224,7 +224,7 @@ export class KanbanGODB extends Dexie {
 
   constructor() {
     super('KanbanGODatabase');
-    this.version(1).stores({
+    this.version(2).stores({
       boards: 'id, title, isArchived, createdAt',
       columns: 'id, boardId, order',
       cards: 'id, boardId, columnId, order, priority, dueDate',
@@ -239,57 +239,13 @@ export const db = new KanbanGODB();
 
 ---
 
-## 6. Aliran Data & Interaksi Pengguna
+## 7. Rencana Tonggak Pelaksanaan (Implementation Milestones)
 
-### 6.1 Unidirectional Data Flow & Optimistic Updates
-1. **Drag-and-Drop Kartu**:
-   * Saat kartu digeser dari Kolom A ke Kolom B (atau diubah urutannya di dalam kolom yang sama), fungsi `onDragEnd` pada `@hello-pangea/dnd` langsung memicu pembaruan state lokal React secara *optimistic* (< 5ms).
-   * Kartu berpindah seketika tanpa flicker visual.
-   * Secara asinkron di latar belakang, transaksi Dexie `db.transaction('rw', db.cards, ...)` memperbarui nilai `columnId` dan `order` seluruh kartu terkait.
-   * Jika terjadi kegagalan database yang tidak terduga, state UI dikembalikan ke posisi semula (*revert*) dan toast notifikasi peringatan ditampilkan.
-2. **Auto-Save Input Kartu**:
-   * Pada modal detail kartu, perubahan judul, deskripsi, dan checklist menggunakan teknik *debounced auto-save* (300ms) sehingga pengguna tidak perlu menekan tombol "Simpan" manual setiap kali mengubah detail tugas.
-
-### 6.2 Sistem Pencadangan Data (Backup & Portabilitas)
-* **Format Cadangan**: JSON terstruktur mencakup metadata board, kolom, kartu, dan item checklist.
-* **Validasi Zod**: Sebelum proses *import* dijalankan, skema file JSON divalidasi ketat menggunakan Zod parser. Jika file rusak atau tidak valid, aplikasi menampilkan pesan error yang ramah dan menolak mutasi database.
-* **Pencadangan Otomatis**: Setiap 24 jam atau saat aplikasi ditutup, aplikasi dapat membuat berkas snapshot cadangan di folder `AppData/Roaming/KanbanGO/backups/`.
-
----
-
-## 7. Penanganan Error & Keandalan (Resilience)
-
-1. **React Error Boundary**:
-   * Komponen `ErrorBoundary` membungkus kanvas board utama. Jika terjadi error render pada kartu atau plugin, aplikasi tidak akan menghasilkan "layar putih kosong" (*white screen of death*).
-   * Ditampilkan layar pemulihan bergaya Bohemian dengan pesan ramah, ilustrasi daun, dan tombol *Pulihkan & Muat Ulang Board*.
-2. **Isolated Preload Security**:
-   * `contextIsolation: true` dan `nodeIntegration: false`. Komunikasi native OS sepenuhnya dibatasi hanya melalui API terdaftar di `window.electronAPI`.
-3. **Graceful Empty & Delete States**:
-   * Penghapusan board atau kolom menyertakan dialog konfirmasi yang jelas agar pengguna tidak kehilangan tugas secara tidak sengaja. Menghapus board secara kaskade (*cascade delete*) akan membersihkan kolom, kartu, dan checklist terkait.
-
----
-
-## 8. Strategi Pengujian (Testing Strategy)
-
-1. **Unit Testing (Vitest)**:
-   * Menguji kalkulasi reorder urutan kartu: `reorderList(list, startIndex, endIndex)`.
-   * Menguji penghitungan persentase penyelesaian checklist: `calculateProgress(items)`.
-   * Menguji validasi parser JSON backup menggunakan Zod schema validator.
-2. **Component Testing (React Testing Library)**:
-   * Memverifikasi render kartu tugas (`CardItem`) lengkap dengan priority badge, checklist counter, dan tag.
-   * Menguji interaksi penambahan kartu baru dari tombol *+ Tambah Kartu*.
-   * Menguji pencarian dan pemfilteran kartu berdasarkan teks judul dan prioritas.
-3. **E2E & Launch Testing**:
-   * Memastikan Electron window dapat diinisialisasi dan menampilkan *Welcome Board* default pada instalasi baru (*first launch seed data*).
-
----
-
-## 9. Rencana Tonggak Pelaksanaan (Implementation Milestones)
-
-* **Milestone 1**: Scaffolding proyek Electron + Vite + React + TypeScript + Tailwind CSS & setup tema Bohemian.
-* **Milestone 2**: Implementasi layer basis data lokal Dexie.js, skema entitas, dan hook `useKanban`.
-* **Milestone 3**: Pengembangan antarmuka utama (Sidebar Board Vault, Custom Titlebar, Canvas Kolom, dan Kartu).
-* **Milestone 4**: Integrasi Drag-and-Drop (`@hello-pangea/dnd`) dan animasi motion organik.
-* **Milestone 5**: Implementasi Modal Detail Kartu (Checklist interaktif, Priority, Due Date, Tagging) & Auto-Save.
-* **Milestone 6**: Fitur Pencarian/Filter, Backup/Export/Import JSON dengan validasi Zod.
-* **Milestone 7**: Pengujian Unit/Komponen, penyempurnaan visual, dan pengemasan installer desktop (.exe).
+* **Milestone 1**: Scaffolding proyek cross-platform Electron + Vite + React + TypeScript + Tailwind CSS & setup tema Bohemian.
+* **Milestone 2**: Basis data lokal Dexie.js (Schema v2), seeding data awal, dan hook state `useKanban`.
+* **Milestone 3**: Komponen Persona Profile (modal edit nama & pemilih avatar) dan navigasi Sidebar.
+* **Milestone 4**: Kanvas Board, kustomisasi kolom, kartu tugas, dan integrasi Drag-and-Drop (`@hello-pangea/dnd`) dengan animasi organik.
+* **Milestone 5**: Modal Detail Kartu (Checklist interaktif, Priority, Due Date, Tagging) dengan debounced auto-save.
+* **Milestone 6**: Hardcore Daily Reminder Engine (analisis data tugas offline, daily briefing banner, dan notifikasi sistem desktop).
+* **Milestone 7**: Pencarian/Filter, Backup/Export/Import JSON dengan validasi Zod.
+* **Milestone 8**: Pengujian Unit/Komponen dan pengemasan installer cross-platform (.exe Windows, .dmg macOS, .AppImage Linux).
