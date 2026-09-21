@@ -38,6 +38,10 @@ function createWindow(): void {
     }
   });
 
+  mainWindow.on('closed', () => {
+    mainWindow = null;
+  });
+
   mainWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url);
     return { action: 'deny' };
@@ -104,6 +108,10 @@ app.whenReady().then(() => {
     () => mainWindow,
     () => {
       isQuitting = true;
+      if (tray) {
+        tray.destroy();
+        tray = null;
+      }
       app.quit();
     }
   );
@@ -115,6 +123,10 @@ app.whenReady().then(() => {
 
 app.on('before-quit', () => {
   isQuitting = true;
+  if (tray) {
+    tray.destroy();
+    tray = null;
+  }
 });
 
 app.on('window-all-closed', () => {

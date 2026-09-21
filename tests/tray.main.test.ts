@@ -30,6 +30,8 @@ const { mockTrayConstructor, MockTray, mockTrayInstances, MockMenu, MockNativeIm
       this.listeners[event] = cb;
       return this;
     });
+
+    destroy = vi.fn();
   }
 
   const MockMenu = {
@@ -188,6 +190,52 @@ describe('System Tray Module (src/main/tray.ts)', () => {
 
       expect(onQuit).toHaveBeenCalledTimes(1);
     });
+
+    it('supports window getter function (() => BrowserWindow | null) dynamically', () => {
+      let currentWin: BrowserWindow | null = null;
+      const onQuit = vi.fn();
+      const template = createTrayMenuTemplate(() => currentWin, onQuit);
+
+      const openItem = template.find(item => item.label && /Buka/i.test(item.label))!;
+      const briefingItem = template.find(item => item.label && /Picu/i.test(item.label))!;
+
+      // When window is null: safe no-op
+      expect(() => openItem.click!({} as any, null as any, {} as any)).not.toThrow();
+      expect(() => briefingItem.click!({} as any, null as any, {} as any)).not.toThrow();
+
+      // Later, window becomes available
+      const mockWin = createMockWindow({
+        isMinimized: vi.fn().mockReturnValue(true)
+      });
+      currentWin = mockWin;
+
+      openItem.click!({} as any, null as any, {} as any);
+      expect(mockWin.restore).toHaveBeenCalledTimes(1);
+      expect(mockWin.show).toHaveBeenCalledTimes(1);
+      expect(mockWin.focus).toHaveBeenCalledTimes(1);
+
+      briefingItem.click!({} as any, null as any, {} as any);
+      expect(mockWin.webContents.send).toHaveBeenCalledWith('tray:trigger-briefing');
+    });
+
+    it('supports direct BrowserWindow or null reference', () => {
+      const mockWin = createMockWindow({
+        isMinimized: vi.fn().mockReturnValue(true)
+      });
+      const onQuit = vi.fn();
+      const template = createTrayMenuTemplate(mockWin, onQuit);
+
+      const openItem = template.find(item => item.label && /Buka/i.test(item.label))!;
+      const briefingItem = template.find(item => item.label && /Picu/i.test(item.label))!;
+
+      openItem.click!({} as any, mockWin, {} as any);
+      expect(mockWin.restore).toHaveBeenCalledTimes(1);
+      expect(mockWin.show).toHaveBeenCalledTimes(1);
+      expect(mockWin.focus).toHaveBeenCalledTimes(1);
+
+      briefingItem.click!({} as any, mockWin, {} as any);
+      expect(mockWin.webContents.send).toHaveBeenCalledWith('tray:trigger-briefing');
+    });
   });
 
   describe('setupSystemTray', () => {
@@ -205,9 +253,34 @@ describe('System Tray Module (src/main/tray.ts)', () => {
       expect(tray.on).toHaveBeenCalledWith('click', expect.any(Function));
     });
 
-    it('toggles window visibility on tray click: hides when visible', () => {
+    it('passes window getter to createTrayMenuTemplate so context menu actions dynamically query current window', () => {
+      let currentWin: BrowserWindow | null = null;
+      const onQuit = vi.fn();
+
+      setupSystemTray(() => currentWin, onQuit);
+
+      const template = MockMenu.buildFromTemplate.mock.calls[0][0];
+      const openItem = template.find((item: any) => item.label && /Buka/i.test(item.label));
+
+      // Initially null window -> safe no-op
+      expect(() => openItem.click()).not.toThrow();
+
+      // Later window is created
       const mockWin = createMockWindow({
-        isVisible: vi.fn().mockReturnValue(true)
+        isMinimized: vi.fn().mockReturnValue(true)
+      });
+      currentWin = mockWin;
+
+      openItem.click();
+      expect(mockWin.restore).toHaveBeenCalledTimes(1);
+      expect(mockWin.show).toHaveBeenCalledTimes(1);
+      expect(mockWin.focus).toHaveBeenCalledTimes(1);
+    });
+
+    it('toggles window visibility on tray click: hides when visible and not minimized', () => {
+      const mockWin = createMockWindow({
+        isVisible: vi.fn().mockReturnValue(true),
+        isMinimized: vi.fn().mockReturnValue(false)
       });
       const onQuit = vi.fn();
 
@@ -219,6 +292,26 @@ describe('System Tray Module (src/main/tray.ts)', () => {
 
       expect(mockWin.hide).toHaveBeenCalledTimes(1);
       expect(mockWin.show).not.toHaveBeenCalled();
+    });
+
+    it('toggles window visibility on tray click: restores and focuses window when isVisible is true AND isMinimized is true (Windows minimized visibility trap)', () => {
+      const mockWin = createMockWindow({
+        isVisible: vi.fn().mockReturnValue(true),
+        isMinimized: vi.fn().mockReturnValue(true)
+      });
+      const onQuit = vi.fn();
+
+      const tray = setupSystemTray(() => mockWin, onQuit) as any;
+      const clickHandler = tray.listeners['click'];
+      expect(clickHandler).toBeDefined();
+
+      clickHandler();
+
+      // Crucial Windows behavior: should restore and focus, NOT hide!
+      expect(mockWin.restore).toHaveBeenCalledTimes(1);
+      expect(mockWin.show).toHaveBeenCalledTimes(1);
+      expect(mockWin.focus).toHaveBeenCalledTimes(1);
+      expect(mockWin.hide).not.toHaveBeenCalled();
     });
 
     it('toggles window visibility on tray click: restores, shows, focuses when not visible and minimized', () => {

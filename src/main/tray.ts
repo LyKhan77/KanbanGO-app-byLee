@@ -1,25 +1,24 @@
 import { Tray, Menu, BrowserWindow, MenuItemConstructorOptions, nativeImage } from 'electron';
+import { restoreAndFocusWindow } from './notification';
 
 export function createTrayMenuTemplate(
-  mainWindow: BrowserWindow | null,
+  targetWindow: (BrowserWindow | null) | (() => BrowserWindow | null),
   onQuit: () => void
 ): MenuItemConstructorOptions[] {
+  const getWin = typeof targetWindow === 'function' ? targetWindow : () => targetWindow;
   return [
     {
       label: '📌 Buka KanbanGO!',
       click: () => {
-        if (mainWindow && !mainWindow.isDestroyed()) {
-          if (mainWindow.isMinimized()) mainWindow.restore();
-          mainWindow.show();
-          mainWindow.focus();
-        }
+        restoreAndFocusWindow(getWin());
       }
     },
     {
       label: '🔥 Picu Hardcore Reminder Sekarang',
       click: () => {
-        if (mainWindow && !mainWindow.isDestroyed()) {
-          mainWindow.webContents.send('tray:trigger-briefing');
+        const win = getWin();
+        if (win && !win.isDestroyed()) {
+          win.webContents.send('tray:trigger-briefing');
         }
       }
     },
@@ -48,8 +47,7 @@ export function setupSystemTray(
   tray.setToolTip('KanbanGO! - Bohemian Mindful Organizer');
 
   const updateMenu = () => {
-    const win = getMainWindow();
-    const template = createTrayMenuTemplate(win, onQuit);
+    const template = createTrayMenuTemplate(getMainWindow, onQuit);
     const contextMenu = Menu.buildFromTemplate(template);
     tray.setContextMenu(contextMenu);
   };
@@ -59,12 +57,10 @@ export function setupSystemTray(
   tray.on('click', () => {
     const win = getMainWindow();
     if (win && !win.isDestroyed()) {
-      if (win.isVisible()) {
+      if (win.isVisible() && !win.isMinimized()) {
         win.hide();
       } else {
-        if (win.isMinimized()) win.restore();
-        win.show();
-        win.focus();
+        restoreAndFocusWindow(win);
       }
     }
   });
