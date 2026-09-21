@@ -282,4 +282,46 @@ describe('End-to-End Feature Verification Suite', () => {
     expect(screen.getByRole('heading', { level: 4, name: /Eksplorasi Fitur Bohemian KanbanGO!/i })).toBeDefined();
     expect(screen.queryByRole('heading', { level: 4, name: /Buat Board Baru untuk Proyek Anda/i })).toBeNull(); // it has 'medium' priority
   });
+
+  it('Journey 8: System Tray event triggers Native OS Notification in real-time', async () => {
+    let trayCallback: (() => void) | null = null;
+    const showNotificationMock = vi.fn().mockResolvedValue({ success: true });
+
+    (window as any).electronAPI = {
+      showNotification: showNotificationMock,
+      restoreWindow: vi.fn().mockResolvedValue(undefined),
+      onTriggerBriefingFromTray: vi.fn((cb: () => void) => {
+        trayCallback = cb;
+        return () => {
+          trayCallback = null;
+        };
+      })
+    };
+
+    render(
+      <KanbanProvider>
+        <TestApp />
+      </KanbanProvider>
+    );
+
+    // Wait for hydration
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { level: 4, name: /Eksplorasi Fitur Bohemian KanbanGO!/i })).toBeDefined();
+    });
+
+    expect(trayCallback).toBeTypeOf('function');
+
+    // Trigger tray manual briefing action
+    act(() => {
+      trayCallback!();
+    });
+
+    expect(showNotificationMock).toHaveBeenCalledTimes(1);
+    expect(showNotificationMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: expect.stringMatching(/🔥 Hardcore Coach/i),
+        body: expect.stringMatching(/Eksplorasi Fitur Bohemian KanbanGO!/i)
+      })
+    );
+  });
 });
