@@ -2,6 +2,7 @@ import React from 'react';
 import { Draggable } from '@hello-pangea/dnd';
 import { Card, ChecklistItem } from '../../../shared/types';
 import { Calendar, Tag, CheckSquare, AlertCircle } from 'lucide-react';
+import { getTodayDateString } from '../../utils/scheduler';
 
 interface CardItemProps {
   card: Card;
@@ -11,7 +12,7 @@ interface CardItemProps {
 }
 
 export const CardItem: React.FC<CardItemProps> = ({ card, index, checklists = [], onClick }) => {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = getTodayDateString(new Date());
   const isOverdue = card.dueDate && card.dueDate < today;
   const isDueToday = card.dueDate && card.dueDate === today;
 

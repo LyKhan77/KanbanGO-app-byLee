@@ -361,16 +361,21 @@ export const KanbanProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     return briefing;
   };
 
-  const stateRef = useRef({ profile, cards, columns, assistantConfig, updateAssistantConfig });
+  const stateRef = useRef({ profile, boards, cards, columns, assistantConfig, updateAssistantConfig });
   useEffect(() => {
-    stateRef.current = { profile, cards, columns, assistantConfig, updateAssistantConfig };
+    stateRef.current = { profile, boards, cards, columns, assistantConfig, updateAssistantConfig };
   });
 
   useEffect(() => {
     if (!isInitialized) return;
 
     const checkReminder = () => {
-      const { profile, cards, columns, assistantConfig, updateAssistantConfig } = stateRef.current;
+      const { profile, boards, cards, columns, assistantConfig, updateAssistantConfig } = stateRef.current;
+      // If boards exist but columns/cards are still hydrating, defer to next interval tick
+      if (boards.length > 0 && columns.length === 0) {
+        return;
+      }
+
       const now = new Date();
       const todayDate = getTodayDateString(now);
       const currentTime = getCurrentTimeString(now);

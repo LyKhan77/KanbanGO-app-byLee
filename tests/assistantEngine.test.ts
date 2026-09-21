@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { generateDailyBriefing } from '../src/renderer/src/utils/assistantEngine';
+import { getTodayDateString } from '../src/renderer/src/utils/scheduler';
 import { Card, Column, UserProfile } from '../src/shared/types';
 
 describe('Hardcore Daily Reminder Engine', () => {
@@ -17,7 +18,7 @@ describe('Hardcore Daily Reminder Engine', () => {
   ];
 
   it('generates urgent callout when there is an overdue or today-due high priority card', () => {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = getTodayDateString(new Date());
     const mockCards: Card[] = [
       {
         id: 'c1',
