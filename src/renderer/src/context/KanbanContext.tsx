@@ -344,6 +344,21 @@ export const KanbanProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }
   };
 
+  const dispatchBriefingNotification = (
+    profile: UserProfile,
+    cards: Card[],
+    columns: Column[]
+  ) => {
+    const briefing = generateDailyBriefing(profile, cards, columns);
+    if (briefing && window.electronAPI?.showNotification) {
+      window.electronAPI.showNotification({
+        title: `🔥 Hardcore Coach: ${briefing.headline}`,
+        body: briefing.message
+      });
+    }
+    return briefing;
+  };
+
   const stateRef = useRef({ profile, cards, columns, assistantConfig, updateAssistantConfig });
   useEffect(() => {
     stateRef.current = { profile, cards, columns, assistantConfig, updateAssistantConfig };
@@ -365,17 +380,12 @@ export const KanbanProvider: React.FC<{ children: ReactNode }> = ({ children }) 
           currentTime
         })
       ) {
-        const briefing = generateDailyBriefing(profile, cards, columns);
-        if (briefing && window.electronAPI?.showNotification) {
-          window.electronAPI.showNotification({
-            title: `🔥 Hardcore Coach: ${briefing.headline}`,
-            body: briefing.message
-          });
-        }
-        updateAssistantConfig({ lastBriefingDate: todayDate });
+        dispatchBriefingNotification(profile, cards, columns);
+        updateAssistantConfig({ lastBriefingDate: todayDate }).catch(console.error);
       }
     };
 
+    checkReminder();
     const intervalId = setInterval(checkReminder, 30000);
     return () => clearInterval(intervalId);
   }, []);
@@ -384,13 +394,7 @@ export const KanbanProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     if (!window.electronAPI?.onTriggerBriefingFromTray) return;
     const unsubscribe = window.electronAPI.onTriggerBriefingFromTray(() => {
       const { profile, cards, columns } = stateRef.current;
-      const briefing = generateDailyBriefing(profile, cards, columns);
-      if (briefing && window.electronAPI?.showNotification) {
-        window.electronAPI.showNotification({
-          title: `🔥 Hardcore Coach: ${briefing.headline}`,
-          body: briefing.message
-        });
-      }
+      dispatchBriefingNotification(profile, cards, columns);
     });
     return () => {
       unsubscribe();
