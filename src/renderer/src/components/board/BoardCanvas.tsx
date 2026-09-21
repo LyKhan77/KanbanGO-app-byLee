@@ -3,6 +3,8 @@ import { DragDropContext, DropResult } from '@hello-pangea/dnd';
 import { useKanban } from '../../context/KanbanContext';
 import { ColumnView } from './ColumnView';
 import { Card } from '../../../shared/types';
+import { DailyBriefingBanner } from '../assistant/DailyBriefingBanner';
+import { generateDailyBriefing } from '../../utils/assistantEngine';
 import { Search, Plus, Filter, Sparkles, Feather } from 'lucide-react';
 
 interface BoardCanvasProps {
@@ -15,6 +17,9 @@ export const BoardCanvas: React.FC<BoardCanvasProps> = ({ onCardClick }) => {
     columns,
     cards,
     checklists,
+    profile,
+    assistantConfig,
+    updateAssistantConfig,
     moveCard,
     createColumn,
     updateColumn,
@@ -30,6 +35,18 @@ export const BoardCanvas: React.FC<BoardCanvasProps> = ({ onCardClick }) => {
 
   const [isAddingColumn, setIsAddingColumn] = useState(false);
   const [newColumnTitle, setNewColumnTitle] = useState('');
+  const [isBriefingDismissed, setIsBriefingDismissed] = useState(false);
+
+  const today = new Date().toISOString().slice(0, 10);
+  const showBriefing =
+    assistantConfig.isEnabled &&
+    !isBriefingDismissed &&
+    assistantConfig.lastBriefingDate !== today &&
+    columns.length > 0;
+
+  const briefing = showBriefing
+    ? generateDailyBriefing(profile, cards, columns)
+    : null;
 
   if (!activeBoard) {
     return (
@@ -45,7 +62,7 @@ export const BoardCanvas: React.FC<BoardCanvasProps> = ({ onCardClick }) => {
     );
   }
 
-  // Filter cards by search and priority and tags
+  // Filter cards by search, priority, and tags
   const filteredCards = cards.filter((card) => {
     const matchesSearch =
       searchQuery === '' ||
@@ -62,7 +79,6 @@ export const BoardCanvas: React.FC<BoardCanvasProps> = ({ onCardClick }) => {
     return matchesSearch && matchesPriority && matchesTag;
   });
 
-  // Extract all unique tags
   const allTags = Array.from(new Set(cards.flatMap((c) => c.tags)));
 
   const handleDragEnd = (result: DropResult) => {
@@ -86,6 +102,17 @@ export const BoardCanvas: React.FC<BoardCanvasProps> = ({ onCardClick }) => {
     setIsAddingColumn(false);
   };
 
+  const handleFocusCard = (cardId?: string) => {
+    if (!cardId) return;
+    const target = cards.find((c) => c.id === cardId);
+    if (target) onCardClick(target);
+  };
+
+  const handleDismissBriefing = () => {
+    setIsBriefingDismissed(true);
+    updateAssistantConfig({ lastBriefingDate: today });
+  };
+
   return (
     <div className="flex-1 flex flex-col h-[calc(100vh-40px)] overflow-hidden bg-boho-linen select-none">
       {/* Board Header Bar */}
@@ -101,7 +128,6 @@ export const BoardCanvas: React.FC<BoardCanvasProps> = ({ onCardClick }) => {
 
         {/* Filters and Search Bar */}
         <div className="flex items-center gap-2.5">
-          {/* Search Input */}
           <div className="relative">
             <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-boho-clay" />
             <input
@@ -113,7 +139,6 @@ export const BoardCanvas: React.FC<BoardCanvasProps> = ({ onCardClick }) => {
             />
           </div>
 
-          {/* Priority Filter */}
           <select
             value={selectedPriority}
             onChange={(e) => setSelectedPriority(e.target.value)}
@@ -125,7 +150,6 @@ export const BoardCanvas: React.FC<BoardCanvasProps> = ({ onCardClick }) => {
             <option value="low">Rendah (Low)</option>
           </select>
 
-          {/* Tag Filter */}
           {allTags.length > 0 && (
             <select
               value={selectedTag}
@@ -141,7 +165,6 @@ export const BoardCanvas: React.FC<BoardCanvasProps> = ({ onCardClick }) => {
             </select>
           )}
 
-          {/* Add Column Button */}
           <button
             onClick={() => setIsAddingColumn(true)}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-terracotta text-white font-medium text-xs rounded-xl hover:bg-terracotta-deep transition-all shadow-sm shadow-terracotta/20"
@@ -151,6 +174,15 @@ export const BoardCanvas: React.FC<BoardCanvasProps> = ({ onCardClick }) => {
           </button>
         </div>
       </div>
+
+      {/* Hardcore Assistant Daily Briefing Banner */}
+      {briefing && (
+        <DailyBriefingBanner
+          briefing={briefing}
+          onFocusCard={handleFocusCard}
+          onDismiss={handleDismissBriefing}
+        />
+      )}
 
       {/* Main Board Droppable Area */}
       <DragDropContext onDragEnd={handleDragEnd}>
@@ -168,7 +200,6 @@ export const BoardCanvas: React.FC<BoardCanvasProps> = ({ onCardClick }) => {
             />
           ))}
 
-          {/* Add Column Inline Card */}
           {isAddingColumn && (
             <form
               onSubmit={handleAddColumnSubmit}
