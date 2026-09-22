@@ -29,7 +29,7 @@ export const Sidebar: React.FC = () => {
   const {
     boards,
     activeBoardId,
-    setActiveBoardId,
+    openBoardTab,
     createBoard,
     deleteBoard,
     profile,
@@ -109,7 +109,7 @@ export const Sidebar: React.FC = () => {
             return (
               <div
                 key={b.id}
-                onClick={() => setActiveBoardId(b.id)}
+                onClick={() => openBoardTab(b.id)}
                 className={`group flex items-center justify-between px-3 py-2.5 rounded-xl cursor-pointer text-sm font-medium transition-all ${
                   isActive
                     ? 'bg-terracotta text-white shadow-md shadow-terracotta/20 font-serif'
