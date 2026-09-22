@@ -50,7 +50,8 @@ const KanbanDashboard: React.FC = () => {
     const loadAllCards = async () => {
       try {
         const loaded = await db.cards.toArray();
-        setAllCards(loaded);
+        const validBoardIds = new Set(boards.map((b) => b.id));
+        setAllCards(loaded.filter((c) => validBoardIds.has(c.boardId)));
       } catch {
         setAllCards(cards);
       }
@@ -58,7 +59,7 @@ const KanbanDashboard: React.FC = () => {
     if (isCommandPaletteOpen) {
       loadAllCards();
     }
-  }, [isCommandPaletteOpen, cards]);
+  }, [isCommandPaletteOpen, cards, boards]);
 
   const handleExport = async () => {
     if (!activeBoardId) return;

@@ -218,6 +218,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     <div
       role="dialog"
       aria-modal="true"
+      aria-label="Pencarian Perintah dan Tugas (Command Palette)"
       className="fixed inset-0 z-50 bg-boho-espresso/40 backdrop-blur-xs flex justify-center pt-20 px-4 select-none animate-fadeIn"
       onClick={onClose}
     >
