@@ -64,7 +64,7 @@ export const WindowHeader: React.FC<WindowHeaderProps> = ({ onOpenCommandPalette
         <div
           role="tablist"
           aria-label="Papan Kerja Terbuka"
-          className="flex items-center gap-1 overflow-x-auto no-scrollbar app-no-drag py-1 flex-1"
+          className="flex items-center gap-1 overflow-x-auto no-scrollbar py-1 flex-1"
           onWheel={(e) => {
             e.currentTarget.scrollLeft += e.deltaY;
           }}
@@ -84,7 +84,7 @@ export const WindowHeader: React.FC<WindowHeaderProps> = ({ onOpenCommandPalette
                     openBoardTab(board.id);
                   }
                 }}
-                className={`group flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs transition-all cursor-pointer shrink-0 max-w-[160px] border focus:outline-none focus:ring-1 focus:ring-terracotta/50 ${
+                className={`group flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs transition-all cursor-pointer shrink-0 max-w-[160px] border focus:outline-none focus:ring-1 focus:ring-terracotta/50 app-no-drag ${
                   isActive
                     ? 'bg-white text-boho-espresso font-semibold border-terracotta/40 shadow-xs'
                     : 'bg-transparent text-boho-walnut hover:bg-boho-canvas/50 border-transparent'
@@ -113,7 +113,7 @@ export const WindowHeader: React.FC<WindowHeaderProps> = ({ onOpenCommandPalette
           <button
             type="button"
             onClick={handleAddBoard}
-            className="p-1 rounded-md text-boho-clay hover:text-terracotta hover:bg-boho-canvas/60 transition-colors shrink-0"
+            className="p-1 rounded-md text-boho-clay hover:text-terracotta hover:bg-boho-canvas/60 transition-colors shrink-0 app-no-drag"
             title="Tambah Board Baru"
             aria-label="Tambah Board Baru"
           >

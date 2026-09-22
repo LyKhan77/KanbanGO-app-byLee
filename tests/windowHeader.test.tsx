@@ -103,4 +103,33 @@ describe('WindowHeader Dragging and Window Controls', () => {
     fireEvent.doubleClick(brandTitle);
     expect(mockElectronAPI.maximizeWindow).toHaveBeenCalledTimes(1);
   });
+
+  it('keeps tabs container draggable while isolating app-no-drag to tab items and add button', () => {
+    render(
+      <KanbanContext.Provider value={mockContextValue}>
+        <WindowHeader />
+      </KanbanContext.Provider>
+    );
+
+    const tablist = screen.getByRole('tablist');
+    expect(tablist.classList.contains('app-no-drag')).toBe(false);
+
+    const tabs = screen.getAllByRole('tab');
+    expect(tabs.length).toBeGreaterThan(0);
+    tabs.forEach((tab) => {
+      expect(tab.classList.contains('app-no-drag')).toBe(true);
+    });
+
+    const addBtn = screen.getByTitle('Tambah Board Baru');
+    expect(addBtn.classList.contains('app-no-drag')).toBe(true);
+
+    // Double clicking empty space on the tablist triggers maximize
+    fireEvent.doubleClick(tablist);
+    expect(mockElectronAPI.maximizeWindow).toHaveBeenCalledTimes(1);
+
+    // Double clicking an individual tab does NOT trigger maximize
+    mockElectronAPI.maximizeWindow.mockClear();
+    fireEvent.doubleClick(tabs[0]);
+    expect(mockElectronAPI.maximizeWindow).not.toHaveBeenCalled();
+  });
 });

@@ -16,7 +16,7 @@ function createWindow(): void {
     minHeight: 600,
     show: false,
     frame: false,
-    titleBarStyle: 'hidden',
+    titleBarStyle: process.platform === 'darwin' ? 'hidden' : undefined,
     autoHideMenuBar: true,
     backgroundColor: '#fdfbf7',
     webPreferences: {
