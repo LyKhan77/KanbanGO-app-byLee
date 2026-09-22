@@ -4,6 +4,7 @@ import { seedInitialData } from '../db/seed';
 import { Board, Column, Card, ChecklistItem, UserProfile, AssistantConfig } from '../../../shared/types';
 import { shouldTriggerDailyBriefing, getTodayDateString, getCurrentTimeString } from '../utils/scheduler';
 import { generateDailyBriefing } from '../utils/assistantEngine';
+import { resolveNextActiveTab } from '../utils/tabUtils';
 
 interface KanbanContextType {
   boards: Board[];
@@ -148,45 +149,19 @@ export const KanbanProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       ? openBoardIds
       : [...openBoardIds, boardId];
     setOpenBoardIds(updated);
-    await setActiveBoardId(boardId);
-    const existing = await db.settings.get('default');
-    if (existing) {
-      await db.settings.update('default', { openBoardIds: updated, activeBoardId: boardId });
-    }
+    setActiveBoardIdState(boardId);
+    await db.settings.update('default', { openBoardIds: updated, activeBoardId: boardId });
   };
 
   const closeBoardTab = async (boardId: string) => {
-    const closedIndex = openBoardIds.indexOf(boardId);
-    if (closedIndex === -1) return;
-
-    let updated = openBoardIds.filter((id) => id !== boardId);
-    let nextActiveId = activeBoardId;
-
-    if (activeBoardId === boardId) {
-      if (updated.length > 0) {
-        const nextIndex = Math.min(closedIndex, updated.length - 1);
-        nextActiveId = updated[nextIndex];
-      } else if (boards.length > 0) {
-        // If user closes last tab, keep at least one tab open
-        const fallback = boards.find((b) => b.id !== boardId) || boards[0];
-        nextActiveId = fallback.id;
-        updated = [fallback.id];
-      } else {
-        nextActiveId = null;
-      }
-      if (nextActiveId) {
-        await setActiveBoardId(nextActiveId);
-      }
-    }
-
-    setOpenBoardIds(updated);
-    const existing = await db.settings.get('default');
-    if (existing) {
-      await db.settings.update('default', {
-        openBoardIds: updated,
-        activeBoardId: nextActiveId || undefined
-      });
-    }
+    if (!openBoardIds.includes(boardId)) return;
+    const { updatedTabs, nextActiveId } = resolveNextActiveTab(openBoardIds, boardId, activeBoardId);
+    setOpenBoardIds(updatedTabs);
+    setActiveBoardIdState(nextActiveId);
+    await db.settings.update('default', {
+      openBoardIds: updatedTabs,
+      activeBoardId: nextActiveId || undefined
+    });
   };
 
   const createBoard = async (title: string, description?: string) => {
@@ -211,13 +186,10 @@ export const KanbanProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
     const updatedOpenIds = openBoardIds.includes(id) ? openBoardIds : [...openBoardIds, id];
     setOpenBoardIds(updatedOpenIds);
-    const existing = await db.settings.get('default');
-    if (existing) {
-      await db.settings.update('default', { openBoardIds: updatedOpenIds, activeBoardId: id });
-    }
+    setActiveBoardIdState(id);
+    await db.settings.update('default', { openBoardIds: updatedOpenIds, activeBoardId: id });
 
     await refreshData();
-    await setActiveBoardId(id);
     return id;
   };
 
@@ -237,33 +209,13 @@ export const KanbanProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     await db.cards.where('boardId').equals(id).delete();
     await db.checklists.where('cardId').anyOf(cardIds).delete();
 
-    const closedIndex = openBoardIds.indexOf(id);
-    let updatedTabs = openBoardIds.filter((tabId) => tabId !== id);
-    let nextActiveId = activeBoardId;
-
-    if (activeBoardId === id) {
-      if (updatedTabs.length > 0) {
-        const nextIndex = Math.min(closedIndex, updatedTabs.length - 1);
-        nextActiveId = updatedTabs[nextIndex];
-      } else {
-        const remaining = (await db.boards.toArray()).filter((b) => !b.isArchived);
-        if (remaining.length > 0) {
-          nextActiveId = remaining[0].id;
-          updatedTabs = [nextActiveId];
-        } else {
-          nextActiveId = null;
-        }
-      }
-    }
-
+    const { updatedTabs, nextActiveId } = resolveNextActiveTab(openBoardIds, id, activeBoardId);
     setOpenBoardIds(updatedTabs);
-    const existing = await db.settings.get('default');
-    if (existing) {
-      await db.settings.update('default', {
-        openBoardIds: updatedTabs,
-        activeBoardId: nextActiveId || undefined
-      });
-    }
+    setActiveBoardIdState(nextActiveId);
+    await db.settings.update('default', {
+      openBoardIds: updatedTabs,
+      activeBoardId: nextActiveId || undefined
+    });
 
     await refreshData();
   };

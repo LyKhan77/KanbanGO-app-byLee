@@ -117,5 +117,13 @@ export async function seedInitialData(db: KanbanGODB): Promise<void> {
   await db.columns.bulkAdd([colTodo, colCraft, colHarvest]);
   await db.cards.bulkAdd([card1, card2, card3]);
   await db.checklists.bulkAdd([check1, check2]);
-  await db.settings.add(defaultSettings);
+  const existingSettings = await db.settings.get('default');
+  if (existingSettings) {
+    await db.settings.update('default', {
+      activeBoardId: boardId,
+      openBoardIds: [boardId]
+    });
+  } else {
+    await db.settings.put(defaultSettings);
+  }
 }
