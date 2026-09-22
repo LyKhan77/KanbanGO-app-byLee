@@ -92,8 +92,25 @@ describe('WindowHeader Tabs UI', () => {
       </KanbanContext.Provider>
     );
 
-    const cmdKButton = screen.getByText('⌘K');
-    fireEvent.click(cmdKButton);
+    const cmdButton = screen.getByTitle(/Buka Command Palette/i);
+    fireEvent.click(cmdButton);
     expect(mockOnOpenCommandPalette).toHaveBeenCalledTimes(1);
+  });
+
+  it('supports keyboard navigation on tabs with Enter and Space', () => {
+    render(
+      <KanbanContext.Provider value={mockContextValue}>
+        <WindowHeader />
+      </KanbanContext.Provider>
+    );
+
+    const inactiveTab = screen.getByRole('tab', { name: /Board Dua/i });
+    expect(inactiveTab.getAttribute('aria-selected')).toBe('false');
+
+    fireEvent.keyDown(inactiveTab, { key: 'Enter' });
+    expect(mockOpenTab).toHaveBeenCalledWith('b2');
+
+    fireEvent.keyDown(inactiveTab, { key: ' ' });
+    expect(mockOpenTab).toHaveBeenCalledWith('b2');
   });
 });
