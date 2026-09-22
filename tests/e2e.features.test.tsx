@@ -1,27 +1,79 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import React, { useState } from 'react';
-import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import React, { useState, useEffect } from 'react';
+import { render, screen, fireEvent, act, waitFor, within } from '@testing-library/react';
 import 'fake-indexeddb/auto';
 import { db } from '../src/renderer/src/db/db';
 import { seedInitialData } from '../src/renderer/src/db/seed';
 import { KanbanProvider, useKanban } from '../src/renderer/src/context/KanbanContext';
+import { WindowHeader } from '../src/renderer/src/components/layout/WindowHeader';
 import { Sidebar } from '../src/renderer/src/components/layout/Sidebar';
 import { BoardCanvas } from '../src/renderer/src/components/board/BoardCanvas';
 import { CardDetailModal } from '../src/renderer/src/components/modal/CardDetailModal';
 import { ProfileModal } from '../src/renderer/src/components/profile/ProfileModal';
+import { CommandPalette } from '../src/renderer/src/components/modal/CommandPalette';
 import { exportBoardData, importBoardData, validateBackupJson } from '../src/renderer/src/utils/backup';
 import { Card } from '../src/shared/types';
 
 // Integrated Full App Component for E2E Testing
 const TestApp: React.FC = () => {
-  const { cards, checklists, updateCard, deleteCard, createChecklist, toggleChecklist, deleteChecklist } = useKanban();
+  const {
+    boards,
+    columns,
+    cards,
+    checklists,
+    updateCard,
+    deleteCard,
+    createCard,
+    createChecklist,
+    toggleChecklist,
+    deleteChecklist,
+    openBoardTab,
+    createBoard,
+    openProfileModal
+  } = useKanban();
+
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
-  const selectedCard = cards.find((c) => c.id === selectedCardId) || null;
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [allCards, setAllCards] = useState<Card[]>(cards);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const key = e.key.toLowerCase();
+      if ((e.ctrlKey || e.metaKey) && (key === 'k' || key === 'p')) {
+        e.preventDefault();
+        setIsCommandPaletteOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  useEffect(() => {
+    const loadAllCards = async () => {
+      try {
+        const loaded = await db.cards.toArray();
+        setAllCards(loaded);
+      } catch {
+        setAllCards(cards);
+      }
+    };
+    if (isCommandPaletteOpen) {
+      loadAllCards();
+    }
+  }, [isCommandPaletteOpen, cards]);
+
+  const selectedCard =
+    cards.find((c) => c.id === selectedCardId) ||
+    allCards.find((c) => c.id === selectedCardId) ||
+    null;
 
   return (
-    <div className="flex h-screen w-screen">
-      <Sidebar />
-      <BoardCanvas onCardClick={(card) => setSelectedCardId(card.id)} />
+    <div className="flex flex-col h-screen w-screen overflow-hidden">
+      <WindowHeader onOpenCommandPalette={() => setIsCommandPaletteOpen(true)} />
+      <div className="flex flex-1 overflow-hidden">
+        <Sidebar />
+        <BoardCanvas onCardClick={(card) => setSelectedCardId(card.id)} />
+      </div>
       <CardDetailModal
         card={selectedCard}
         isOpen={!!selectedCard}
@@ -34,6 +86,29 @@ const TestApp: React.FC = () => {
         onDeleteChecklist={deleteChecklist}
       />
       <ProfileModal />
+      <CommandPalette
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setIsCommandPaletteOpen(false)}
+        boards={boards}
+        cards={allCards.length > 0 ? allCards : cards}
+        onSelectBoard={(boardId) => openBoardTab(boardId)}
+        onSelectCard={(card) => {
+          openBoardTab(card.boardId);
+          setSelectedCardId(card.id);
+        }}
+        onQuickAction={async (actionKey) => {
+          if (actionKey === 'create-board') {
+            await createBoard('Board Baru ' + (boards.length + 1));
+          } else if (actionKey === 'create-card') {
+            if (columns.length > 0) {
+              const newId = await createCard(columns[0].id, 'Kartu Baru');
+              if (newId) setSelectedCardId(newId);
+            }
+          } else if (actionKey === 'profile') {
+            openProfileModal();
+          }
+        }}
+      />
     </div>
   );
 };
@@ -323,5 +398,113 @@ describe('End-to-End Feature Verification Suite', () => {
         body: expect.stringMatching(/Eksplorasi Fitur Bohemian KanbanGO!/i)
       })
     );
+  });
+
+  it('Journey 9: Multi-Board Tabs switching, adding, and closing', async () => {
+    render(
+      <KanbanProvider>
+        <TestApp />
+      </KanbanProvider>
+    );
+
+    // 1. Verifies seeded board tab is rendered in WindowHeader
+    const tablist = await screen.findByRole('tablist', { name: /Papan Kerja Terbuka/i });
+    expect(tablist).toBeDefined();
+
+    await waitFor(() => {
+      const tabs = screen.getAllByRole('tab');
+      expect(tabs.length).toBe(1);
+      expect(tabs[0].textContent).toContain('Welcome to KanbanGO!');
+      expect(tabs[0].getAttribute('aria-selected')).toBe('true');
+    });
+
+    // 2. Clicks add board tab (+) to create a second board
+    const addTabBtn = within(tablist).getByRole('button', { name: /Tambah Board Baru/i });
+    fireEvent.click(addTabBtn);
+
+    // 3. Verifies second tab appears and is active
+    await waitFor(() => {
+      const tabs = screen.getAllByRole('tab');
+      expect(tabs.length).toBe(2);
+      expect(tabs[1].textContent).toContain('Board Baru 2');
+      expect(tabs[1].getAttribute('aria-selected')).toBe('true');
+      expect(tabs[0].getAttribute('aria-selected')).toBe('false');
+    });
+
+    // 4. Clicks first tab to switch back
+    const tabs = screen.getAllByRole('tab');
+    fireEvent.click(tabs[0]);
+
+    await waitFor(() => {
+      const currentTabs = screen.getAllByRole('tab');
+      expect(currentTabs[0].getAttribute('aria-selected')).toBe('true');
+      expect(currentTabs[1].getAttribute('aria-selected')).toBe('false');
+    });
+
+    // 5. Closes second tab via close button, verifying tab is closed and first board remains active
+    const secondTabCloseBtn = within(screen.getAllByRole('tab')[1]).getByRole('button', {
+      name: /Tutup tab/i
+    });
+    fireEvent.click(secondTabCloseBtn);
+
+    await waitFor(() => {
+      const remainingTabs = screen.getAllByRole('tab');
+      expect(remainingTabs.length).toBe(1);
+      expect(remainingTabs[0].textContent).toContain('Welcome to KanbanGO!');
+      expect(remainingTabs[0].getAttribute('aria-selected')).toBe('true');
+      expect(within(tablist).queryByText('Board Baru 2')).toBeNull();
+    });
+  });
+
+  it('Journey 10: Bohemian Command Palette search, keyboard navigation, and card modal opening', async () => {
+    render(
+      <KanbanProvider>
+        <TestApp />
+      </KanbanProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getAllByText(/Welcome to KanbanGO!/i).length).toBeGreaterThanOrEqual(1);
+    });
+
+    // 1. Opens Command Palette (via clicking ⌘K or Ctrl+K)
+    // Verify opening via keyboard shortcut Ctrl+K
+    fireEvent.keyDown(window, { key: 'k', ctrlKey: true });
+    expect(screen.getByRole('dialog')).toBeDefined();
+
+    // Close via Escape key
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(screen.queryByRole('dialog')).toBeNull();
+
+    // Reopen via clicking ⌘K button
+    const cmdKBtn = screen.getByTitle(/Buka Command Palette/i);
+    fireEvent.click(cmdKBtn);
+
+    const searchInput = await screen.findByPlaceholderText(/Ketik nama board, kartu tugas, atau aksi cepat.../i);
+    expect(searchInput).toBeDefined();
+
+    // 2. Types search query (e.g. 'Eksplorasi')
+    fireEvent.change(searchInput, { target: { value: 'Eksplorasi' } });
+
+    // Verifies matching card appears in the palette dialog
+    const paletteDialog = screen.getByRole('dialog');
+    expect(within(paletteDialog).getByText('Eksplorasi Fitur Bohemian KanbanGO!')).toBeDefined();
+
+    // 3. Selects the card item with Enter (using keyboard navigation)
+    fireEvent.keyDown(searchInput, { key: 'ArrowDown' });
+    fireEvent.keyDown(searchInput, { key: 'Enter' });
+
+    // 4. Verifies Command Palette closes and CardDetailModal opens displaying the task details
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).toBeNull();
+      expect(screen.queryByPlaceholderText(/Ketik nama board, kartu tugas, atau aksi cepat.../i)).toBeNull();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByDisplayValue('Eksplorasi Fitur Bohemian KanbanGO!')).toBeDefined();
+      expect(screen.getByText('Sub-tugas (Checklist)')).toBeDefined();
+      expect(screen.getByText('Catatan & Deskripsi Tugas')).toBeDefined();
+      expect(screen.getByText(/Buka kartu ini untuk melihat detail sub-tugas/i)).toBeDefined();
+    });
   });
 });
