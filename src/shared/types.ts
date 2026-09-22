@@ -34,6 +34,17 @@ export interface Column {
   accentColor?: string;   // Warna badge kolom
 }
 
+export type CardCoverColor =
+  | 'none'
+  | 'terracotta'
+  | 'sage'
+  | 'ochre'
+  | 'rose'
+  | 'walnut'
+  | 'slate';
+
+export type BoardViewMode = 'kanban' | 'calendar';
+
 // 5. Entitas Kartu Tugas (Card)
 export interface Card {
   id: string;             // UUID v4
@@ -45,6 +56,7 @@ export interface Card {
   priority: 'low' | 'medium' | 'high' | 'none';
   dueDate?: string;       // Format tanggal: 'YYYY-MM-DD'
   tags: string[];         // Label kategori (misal: ["Desain", "Riset"])
+  coverColor?: CardCoverColor;
   createdAt: number;
   updatedAt: number;
 }
@@ -63,6 +75,7 @@ export interface UserSettings {
   id: string;             // 'default'
   activeBoardId?: string;
   openBoardIds?: string[];
+  activeViewMode?: BoardViewMode;
   isSidebarCollapsed: boolean;
   profile: UserProfile;
   assistant: AssistantConfig;
