@@ -27,6 +27,7 @@ const KanbanDashboard: React.FC = () => {
     openBoardTab,
     createBoard,
     openProfileModal,
+    setViewMode,
     refreshData
   } = useKanban();
 
@@ -172,6 +173,10 @@ const KanbanDashboard: React.FC = () => {
               const newId = await createCard(colId, 'Kartu Baru');
               if (newId) setSelectedCardId(newId);
             }
+          } else if (actionKey === 'switch-calendar') {
+            await setViewMode('calendar');
+          } else if (actionKey === 'switch-kanban') {
+            await setViewMode('kanban');
           } else if (actionKey === 'export') {
             await handleExport();
           } else if (actionKey === 'import') {

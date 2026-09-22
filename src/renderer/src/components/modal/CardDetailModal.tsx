@@ -179,7 +179,11 @@ export const CardDetailModal: React.FC<CardDetailModalProps> = ({
             />
           </div>
           <button
+            type="button"
+            data-testid="modal-close-btn"
             onClick={handleClose}
+            aria-label="Tutup modal detail"
+            title="Tutup modal detail"
             className="p-1.5 text-boho-clay hover:text-boho-espresso rounded-xl hover:bg-boho-sand transition-colors shrink-0"
           >
             <X className="w-5 h-5" />

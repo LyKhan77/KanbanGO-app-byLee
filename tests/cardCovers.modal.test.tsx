@@ -259,7 +259,7 @@ describe('CardDetailModal with Cover Picker and Markdown Preview', () => {
     const titleInput = screen.getByPlaceholderText(/Judul kartu tugas.../i);
     fireEvent.change(titleInput, { target: { value: 'Pending Title on Close' } });
 
-    const closeButton = screen.getByRole('button', { name: /Tutup/i });
+    const closeButton = screen.getByTestId('modal-close-btn');
     fireEvent.click(closeButton);
 
     expect(mockUpdateCard).toHaveBeenCalledWith('c1', expect.objectContaining({ title: 'Pending Title on Close' }));

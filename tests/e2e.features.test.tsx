@@ -29,7 +29,8 @@ const TestApp: React.FC = () => {
     deleteChecklist,
     openBoardTab,
     createBoard,
-    openProfileModal
+    openProfileModal,
+    setViewMode
   } = useKanban();
 
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
@@ -104,6 +105,10 @@ const TestApp: React.FC = () => {
               const newId = await createCard(columns[0].id, 'Kartu Baru');
               if (newId) setSelectedCardId(newId);
             }
+          } else if (actionKey === 'switch-calendar') {
+            await setViewMode('calendar');
+          } else if (actionKey === 'switch-kanban') {
+            await setViewMode('kanban');
           } else if (actionKey === 'profile') {
             openProfileModal();
           }
@@ -505,6 +510,121 @@ describe('End-to-End Feature Verification Suite', () => {
       expect(screen.getByText('Sub-tugas (Checklist)')).toBeDefined();
       expect(screen.getByText('Catatan & Deskripsi Tugas')).toBeDefined();
       expect(screen.getByText(/Buka kartu ini untuk melihat detail sub-tugas/i)).toBeDefined();
+    });
+  });
+
+  it('Journey 11: Calendar View switching, board tabs DnD reordering, card covers, and markdown preview', async () => {
+    render(
+      <KanbanProvider>
+        <TestApp />
+      </KanbanProvider>
+    );
+
+    // 1. Wait for initial hydration
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { level: 4, name: /Eksplorasi Fitur Bohemian KanbanGO!/i })).toBeDefined();
+    });
+
+    // 2. Board Tabs Reordering via DnD
+    const tablist = screen.getByRole('tablist', { name: /Papan Kerja Terbuka/i });
+    const addTabBtn = within(tablist).getByRole('button', { name: /Tambah Board Baru/i });
+    fireEvent.click(addTabBtn);
+
+    await waitFor(() => {
+      expect(screen.getAllByRole('tab').length).toBe(2);
+    });
+
+    const tabs = screen.getAllByRole('tab');
+    const tab1 = tabs[0];
+    const tab2 = tabs[1];
+
+    const dataTransfer = {
+      setData: vi.fn(),
+      getData: vi.fn().mockImplementation((format: string) => {
+        if (format === 'application/x-kanbango-tab-index' || format === 'text/plain') return '0';
+        return '';
+      }),
+      effectAllowed: 'move',
+      dropEffect: 'move'
+    };
+
+    fireEvent.dragStart(tab1, { dataTransfer });
+    fireEvent.dragOver(tab2, { dataTransfer });
+    fireEvent.drop(tab2, { dataTransfer });
+
+    // 3. View Switcher in Board Toolbar: switch to Calendar View
+    const calendarViewBtn = screen.getByRole('button', { name: /Tampilan Kalender/i });
+    fireEvent.click(calendarViewBtn);
+
+    // Verifies Calendar View rendered
+    await waitFor(() => {
+      expect(screen.getByText(/Hari Ini/i)).toBeDefined();
+      expect(screen.getByText(/Belum Terjadwal/i)).toBeDefined();
+    });
+
+    // Switch back to Kanban View
+    const kanbanViewBtn = screen.getByRole('button', { name: /Tampilan Kanban/i });
+    fireEvent.click(kanbanViewBtn);
+
+    // Switch back to Welcome board tab so its cards are visible
+    const welcomeTab = screen.getAllByRole('tab').find((t) => t.textContent?.includes('Welcome to KanbanGO!'));
+    if (welcomeTab) {
+      fireEvent.click(welcomeTab);
+    }
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { level: 4, name: /Eksplorasi Fitur Bohemian KanbanGO!/i })).toBeDefined();
+    });
+
+    // 4. Switch to Calendar View via Command Palette quick action
+    fireEvent.keyDown(window, { key: 'k', ctrlKey: true });
+    const searchInput = await screen.findByPlaceholderText(/Ketik nama board, kartu tugas, atau aksi cepat.../i);
+    fireEvent.change(searchInput, { target: { value: 'Beralih ke Tampilan Kalender' } });
+
+    const calendarAction = await screen.findByText('Beralih ke Tampilan Kalender');
+    fireEvent.click(calendarAction);
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).toBeNull();
+      expect(screen.getByText(/Belum Terjadwal/i)).toBeDefined();
+    });
+
+    // Switch back to Kanban via board toolbar
+    const kanbanBtn2 = screen.getByRole('button', { name: /Tampilan Kanban/i });
+    fireEvent.click(kanbanBtn2);
+
+    // 5. Card Cover Selection & Markdown Preview in CardDetailModal
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { level: 4, name: /Eksplorasi Fitur Bohemian KanbanGO!/i })).toBeDefined();
+    });
+    const cardEl = screen.getByRole('heading', { level: 4, name: /Eksplorasi Fitur Bohemian KanbanGO!/i });
+    fireEvent.click(cardEl);
+
+    // Modal opens
+    await waitFor(() => {
+      expect(screen.getByText(/Aksen Kartu:/i)).toBeDefined();
+    });
+
+    // Select terracotta cover chip
+    const terracottaChip = screen.getByTitle(/Terracotta/i);
+    fireEvent.click(terracottaChip);
+
+    // Switch to Markdown Preview tab
+    const previewTabBtn = screen.getByRole('button', { name: /Pratinjau/i });
+    fireEvent.click(previewTabBtn);
+
+    await waitFor(() => {
+      expect(screen.getAllByText(/Sub-tugas/i).length).toBeGreaterThanOrEqual(1);
+    });
+
+    // Close modal
+    const closeBtn = screen.getByTestId('modal-close-btn');
+    fireEvent.click(closeBtn);
+
+    // Verify card in column now has top cover bar
+    await waitFor(() => {
+      const coverBar = document.querySelector('[data-testid="card-cover-bar"]');
+      expect(coverBar).not.toBeNull();
     });
   });
 });

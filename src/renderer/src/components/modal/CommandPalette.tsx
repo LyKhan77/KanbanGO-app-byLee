@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Board, Card } from '../../../shared/types';
-import { Search, Layout, CheckSquare, Plus, Download, Upload, User } from 'lucide-react';
+import { Search, Layout, CheckSquare, Plus, Download, Upload, User, Calendar } from 'lucide-react';
 
 export interface CommandItem {
   id: string;
@@ -18,7 +18,16 @@ export interface CommandPaletteProps {
   cards: Card[];
   onSelectBoard: (boardId: string) => void;
   onSelectCard: (card: Card) => void;
-  onQuickAction: (actionKey: 'create-board' | 'create-card' | 'export' | 'import' | 'profile') => void;
+  onQuickAction: (
+    actionKey:
+      | 'create-board'
+      | 'create-card'
+      | 'export'
+      | 'import'
+      | 'profile'
+      | 'switch-calendar'
+      | 'switch-kanban'
+  ) => void;
 }
 
 export const CommandPalette: React.FC<CommandPaletteProps> = ({
@@ -109,6 +118,28 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         icon: <CheckSquare className="w-4 h-4 text-sage" />,
         action: () => {
           onQuickAction('create-card');
+          onClose();
+        }
+      },
+      {
+        id: 'action-switch-calendar',
+        type: 'action',
+        title: 'Beralih ke Tampilan Kalender',
+        subtitle: 'Lihat kartu berdasarkan jadwal tenggat waktu',
+        icon: <Calendar className="w-4 h-4 text-terracotta" />,
+        action: () => {
+          onQuickAction('switch-calendar');
+          onClose();
+        }
+      },
+      {
+        id: 'action-switch-kanban',
+        type: 'action',
+        title: 'Beralih ke Tampilan Kanban Board',
+        subtitle: 'Kembali ke papan kolom kanban',
+        icon: <Layout className="w-4 h-4 text-terracotta" />,
+        action: () => {
+          onQuickAction('switch-kanban');
           onClose();
         }
       },
