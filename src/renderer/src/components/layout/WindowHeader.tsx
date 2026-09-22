@@ -73,7 +73,9 @@ export const WindowHeader: React.FC<WindowHeaderProps> = ({ onOpenCommandPalette
             e.currentTarget.scrollLeft += e.deltaY;
           }}
         >
-          {openBoards.map((board, index) => {
+          {openBoards.map((board, mapIndex) => {
+            const trueIndex = openBoardIds ? openBoardIds.indexOf(board.id) : -1;
+            const index = trueIndex !== -1 ? trueIndex : mapIndex;
             const isActive = board.id === activeBoardId;
             return (
               <div
@@ -84,6 +86,7 @@ export const WindowHeader: React.FC<WindowHeaderProps> = ({ onOpenCommandPalette
                 draggable={true}
                 onDragStart={(e) => {
                   setDraggedTabIndex(index);
+                  e.dataTransfer.setData('application/x-kanbango-tab-index', index.toString());
                   e.dataTransfer.setData('text/plain', index.toString());
                   e.dataTransfer.effectAllowed = 'move';
                 }}
@@ -94,14 +97,18 @@ export const WindowHeader: React.FC<WindowHeaderProps> = ({ onOpenCommandPalette
                     setDropTargetIndex(index);
                   }
                 }}
-                onDragLeave={() => {
+                onDragLeave={(e) => {
+                  if (e.currentTarget.contains(e.relatedTarget as Node)) return;
                   if (dropTargetIndex === index) {
                     setDropTargetIndex(null);
                   }
                 }}
                 onDrop={(e) => {
                   e.preventDefault();
-                  const sourceIndexStr = e.dataTransfer.getData('text/plain');
+                  if (draggedTabIndex === null) return;
+                  const sourceIndexStr =
+                    e.dataTransfer.getData('application/x-kanbango-tab-index') ||
+                    e.dataTransfer.getData('text/plain');
                   const sourceIdx = sourceIndexStr ? parseInt(sourceIndexStr, 10) : draggedTabIndex;
                   if (sourceIdx !== null && !isNaN(sourceIdx) && sourceIdx !== index) {
                     reorderBoardTabs(sourceIdx, index);
@@ -125,12 +132,16 @@ export const WindowHeader: React.FC<WindowHeaderProps> = ({ onOpenCommandPalette
                     ? 'bg-white text-boho-espresso font-semibold border-terracotta/40 shadow-xs'
                     : 'bg-transparent text-boho-walnut hover:bg-boho-canvas/50 border-transparent'
                 } ${draggedTabIndex === index ? 'opacity-40 scale-95' : ''} ${
-                  dropTargetIndex === index && draggedTabIndex !== index ? 'border-l-2 border-l-terracotta' : ''
+                  dropTargetIndex === index && draggedTabIndex !== null && draggedTabIndex !== index
+                    ? draggedTabIndex > index
+                      ? 'border-l-2 border-l-terracotta'
+                      : 'border-r-2 border-r-terracotta'
+                    : ''
                 }`}
                 title={board.title}
               >
-                <Layout className={`w-3 h-3 shrink-0 ${isActive ? 'text-terracotta' : 'text-boho-clay'}`} />
-                <span className="truncate flex-1">{board.title}</span>
+                <Layout className={`w-3 h-3 shrink-0 pointer-events-none ${isActive ? 'text-terracotta' : 'text-boho-clay'}`} />
+                <span className="truncate flex-1 pointer-events-none">{board.title}</span>
                 <button
                   type="button"
                   title="Tutup Tab"
