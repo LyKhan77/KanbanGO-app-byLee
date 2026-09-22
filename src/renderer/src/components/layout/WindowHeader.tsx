@@ -17,8 +17,16 @@ export const WindowHeader: React.FC = () => {
     (window as any).electronAPI?.closeWindow?.();
   };
 
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest('.app-no-drag')) return;
+    (window as any).electronAPI?.maximizeWindow?.();
+  };
+
   return (
-    <header className="h-10 bg-boho-sand/70 border-b border-boho-canvas/80 flex items-center justify-between px-3 select-none app-drag font-sans text-xs">
+    <header
+      onDoubleClick={handleDoubleClick}
+      className="h-10 bg-boho-sand/70 border-b border-boho-canvas/80 flex items-center justify-between px-3 select-none app-drag font-sans text-xs"
+    >
       {/* Brand & Board info */}
       <div className="flex items-center gap-2 app-no-drag">
         <div className="w-5 h-5 rounded-full bg-terracotta/20 flex items-center justify-center text-terracotta">
