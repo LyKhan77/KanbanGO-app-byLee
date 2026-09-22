@@ -20,6 +20,7 @@ const KanbanDashboard: React.FC = () => {
     updateCard,
     deleteCard,
     createCard,
+    createColumn,
     createChecklist,
     toggleChecklist,
     deleteChecklist,
@@ -35,7 +36,8 @@ const KanbanDashboard: React.FC = () => {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'p')) {
+      const key = e.key.toLowerCase();
+      if ((e.ctrlKey || e.metaKey) && (key === 'k' || key === 'p')) {
         e.preventDefault();
         setIsCommandPaletteOpen((prev) => !prev);
       }
@@ -69,10 +71,17 @@ const KanbanDashboard: React.FC = () => {
         a.href = url;
         a.download = `kanbango-board-${activeBoardId}-${Date.now()}.json`;
         a.click();
-        URL.revokeObjectURL?.(url);
+        setTimeout(() => {
+          if (URL.revokeObjectURL) {
+            URL.revokeObjectURL(url);
+          }
+        }, 1000);
       }
     } catch (err: any) {
       console.error('Export failed:', err);
+      if (typeof window !== 'undefined' && typeof window.alert === 'function') {
+        window.alert('Gagal mengekspor data board: ' + (err?.message || 'Terjadi kesalahan'));
+      }
     }
   };
 
@@ -99,6 +108,9 @@ const KanbanDashboard: React.FC = () => {
         await openBoardTab(newBoardId);
       } catch (err: any) {
         console.error('Import failed:', err);
+        if (typeof window !== 'undefined' && typeof window.alert === 'function') {
+          window.alert('Gagal mengimpor file cadangan: ' + (err?.message || 'Format tidak valid'));
+        }
       }
     };
     input.click();
@@ -152,7 +164,12 @@ const KanbanDashboard: React.FC = () => {
             await createBoard('Board Baru ' + (boards.length + 1));
           } else if (actionKey === 'create-card') {
             if (columns.length > 0) {
-              await createCard(columns[0].id, 'Kartu Baru');
+              const newId = await createCard(columns[0].id, 'Kartu Baru');
+              if (newId) setSelectedCardId(newId);
+            } else {
+              const colId = await createColumn('Inspirasi');
+              const newId = await createCard(colId, 'Kartu Baru');
+              if (newId) setSelectedCardId(newId);
             }
           } else if (actionKey === 'export') {
             await handleExport();

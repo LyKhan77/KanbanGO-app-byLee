@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Board, Card } from '../../../shared/types';
 import { Search, Layout, CheckSquare, Plus, Download, Upload, User } from 'lucide-react';
 
@@ -33,148 +33,186 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (isOpen) {
-      setQuery('');
-      setSelectedIndex(0);
-      setTimeout(() => inputRef.current?.focus(), 50);
-    }
-  }, [isOpen]);
-
-  if (!isOpen) return null;
+  const resultsContainerRef = useRef<HTMLDivElement>(null);
 
   const cleanQuery = query.toLowerCase().trim();
 
   // 1. Boards
-  const matchingBoards: CommandItem[] = (boards || [])
-    .filter(
-      (b) =>
-        !cleanQuery ||
-        b.title.toLowerCase().includes(cleanQuery) ||
-        b.description?.toLowerCase().includes(cleanQuery)
-    )
-    .slice(0, 5)
-    .map((b) => ({
-      id: `board-${b.id}`,
-      type: 'board',
-      title: b.title,
-      subtitle: 'Papan Kerja',
-      icon: <Layout className="w-4 h-4 text-terracotta" />,
-      action: () => {
-        onSelectBoard(b.id);
-        onClose();
-      }
-    }));
-
-  // 2. Cards
-  const matchingCards: CommandItem[] = (cards || [])
-    .filter(
-      (c) =>
-        !cleanQuery ||
-        c.title.toLowerCase().includes(cleanQuery) ||
-        c.description?.toLowerCase().includes(cleanQuery) ||
-        (Array.isArray(c.tags) && c.tags.some((t) => t.toLowerCase().includes(cleanQuery)))
-    )
-    .slice(0, 6)
-    .map((c) => {
-      const parentBoard = (boards || []).find((b) => b.id === c.boardId);
-      return {
-        id: `card-${c.id}`,
-        type: 'card',
-        title: c.title,
-        subtitle: parentBoard ? `Kartu • ${parentBoard.title}` : 'Kartu Tugas',
-        icon: <CheckSquare className="w-4 h-4 text-amber-600" />,
+  const matchingBoards: CommandItem[] = useMemo(() => {
+    return (boards || [])
+      .filter(
+        (b) =>
+          !cleanQuery ||
+          b.title.toLowerCase().includes(cleanQuery) ||
+          b.description?.toLowerCase().includes(cleanQuery)
+      )
+      .slice(0, 5)
+      .map((b) => ({
+        id: `board-${b.id}`,
+        type: 'board',
+        title: b.title,
+        subtitle: 'Papan Kerja',
+        icon: <Layout className="w-4 h-4 text-terracotta" />,
         action: () => {
-          onSelectCard(c);
+          onSelectBoard(b.id);
           onClose();
         }
-      };
-    });
+      }));
+  }, [boards, cleanQuery, onSelectBoard, onClose]);
+
+  // 2. Cards
+  const matchingCards: CommandItem[] = useMemo(() => {
+    return (cards || [])
+      .filter(
+        (c) =>
+          !cleanQuery ||
+          c.title.toLowerCase().includes(cleanQuery) ||
+          c.description?.toLowerCase().includes(cleanQuery) ||
+          (Array.isArray(c.tags) && c.tags.some((t) => t.toLowerCase().includes(cleanQuery)))
+      )
+      .slice(0, 6)
+      .map((c) => {
+        const parentBoard = (boards || []).find((b) => b.id === c.boardId);
+        return {
+          id: `card-${c.id}`,
+          type: 'card',
+          title: c.title,
+          subtitle: parentBoard ? `Kartu • ${parentBoard.title}` : 'Kartu Tugas',
+          icon: <CheckSquare className="w-4 h-4 text-amber-600" />,
+          action: () => {
+            onSelectCard(c);
+            onClose();
+          }
+        };
+      });
+  }, [cards, boards, cleanQuery, onSelectCard, onClose]);
 
   // 3. Quick Actions
-  const quickActions: CommandItem[] = [
-    {
-      id: 'action-create-board',
-      type: 'action',
-      title: 'Buat Board Baru',
-      subtitle: 'Tambah kanban board baru',
-      icon: <Plus className="w-4 h-4 text-sage" />,
-      action: () => {
-        onQuickAction('create-board');
-        onClose();
+  const quickActions: CommandItem[] = useMemo(() => {
+    const actions: CommandItem[] = [
+      {
+        id: 'action-create-board',
+        type: 'action',
+        title: 'Buat Board Baru',
+        subtitle: 'Tambah kanban board baru',
+        icon: <Plus className="w-4 h-4 text-sage" />,
+        action: () => {
+          onQuickAction('create-board');
+          onClose();
+        }
+      },
+      {
+        id: 'action-create-card',
+        type: 'action',
+        title: 'Buat Kartu Baru',
+        subtitle: 'Tambah kartu di kolom pertama board aktif',
+        icon: <CheckSquare className="w-4 h-4 text-sage" />,
+        action: () => {
+          onQuickAction('create-card');
+          onClose();
+        }
+      },
+      {
+        id: 'action-export',
+        type: 'action',
+        title: 'Ekspor Cadangan Board (JSON)',
+        subtitle: 'Unduh backup file JSON',
+        icon: <Download className="w-4 h-4 text-boho-clay" />,
+        action: () => {
+          onQuickAction('export');
+          onClose();
+        }
+      },
+      {
+        id: 'action-import',
+        type: 'action',
+        title: 'Impor Cadangan Board (JSON)',
+        subtitle: 'Pulihkan data dari file JSON',
+        icon: <Upload className="w-4 h-4 text-boho-clay" />,
+        action: () => {
+          onQuickAction('import');
+          onClose();
+        }
+      },
+      {
+        id: 'action-profile',
+        type: 'action',
+        title: 'Buka Profil & Asisten',
+        subtitle: 'Pengaturan nama, avatar, dan jam pengingat',
+        icon: <User className="w-4 h-4 text-terracotta" />,
+        action: () => {
+          onQuickAction('profile');
+          onClose();
+        }
       }
-    },
-    {
-      id: 'action-create-card',
-      type: 'action',
-      title: 'Buat Kartu Baru',
-      subtitle: 'Tambah kartu di kolom pertama board aktif',
-      icon: <CheckSquare className="w-4 h-4 text-sage" />,
-      action: () => {
-        onQuickAction('create-card');
-        onClose();
-      }
-    },
-    {
-      id: 'action-export',
-      type: 'action',
-      title: 'Ekspor Cadangan Board (JSON)',
-      subtitle: 'Unduh backup file JSON',
-      icon: <Download className="w-4 h-4 text-boho-clay" />,
-      action: () => {
-        onQuickAction('export');
-        onClose();
-      }
-    },
-    {
-      id: 'action-import',
-      type: 'action',
-      title: 'Impor Cadangan Board (JSON)',
-      subtitle: 'Pulihkan data dari file JSON',
-      icon: <Upload className="w-4 h-4 text-boho-clay" />,
-      action: () => {
-        onQuickAction('import');
-        onClose();
-      }
-    },
-    {
-      id: 'action-profile',
-      type: 'action',
-      title: 'Buka Profil & Asisten',
-      subtitle: 'Pengaturan nama, avatar, dan jam pengingat',
-      icon: <User className="w-4 h-4 text-terracotta" />,
-      action: () => {
-        onQuickAction('profile');
-        onClose();
-      }
-    }
-  ].filter(
-    (a) =>
-      !cleanQuery ||
-      a.title.toLowerCase().includes(cleanQuery) ||
-      a.subtitle?.toLowerCase().includes(cleanQuery)
+    ];
+
+    return actions.filter(
+      (a) =>
+        !cleanQuery ||
+        a.title.toLowerCase().includes(cleanQuery) ||
+        a.subtitle?.toLowerCase().includes(cleanQuery)
+    );
+  }, [cleanQuery, onQuickAction, onClose]);
+
+  const allItems: CommandItem[] = useMemo(
+    () => [...matchingBoards, ...matchingCards, ...quickActions],
+    [matchingBoards, matchingCards, quickActions]
   );
 
-  const allItems: CommandItem[] = [...matchingBoards, ...matchingCards, ...quickActions];
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      onClose();
-    } else if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setSelectedIndex((prev) => (allItems.length > 0 ? (prev + 1) % allItems.length : 0));
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setSelectedIndex((prev) => (allItems.length > 0 ? (prev - 1 + allItems.length) % allItems.length : 0));
-    } else if (e.key === 'Enter') {
-      e.preventDefault();
-      if (allItems[selectedIndex]) {
-        allItems[selectedIndex].action();
-      }
+  // Focus input on open with timer cleanup
+  useEffect(() => {
+    if (isOpen) {
+      setQuery('');
+      setSelectedIndex(0);
+      const timer = setTimeout(() => inputRef.current?.focus(), 50);
+      return () => clearTimeout(timer);
     }
-  };
+  }, [isOpen]);
+
+  // Keep selected index within bounds when item list changes
+  useEffect(() => {
+    if (selectedIndex >= allItems.length && allItems.length > 0) {
+      setSelectedIndex(0);
+    }
+  }, [allItems.length, selectedIndex]);
+
+  // Auto-scroll selected item into view
+  useEffect(() => {
+    if (!isOpen) return;
+    const selectedEl = resultsContainerRef.current?.querySelector(`[data-index="${selectedIndex}"]`);
+    selectedEl?.scrollIntoView?.({ block: 'nearest' });
+  }, [selectedIndex, isOpen]);
+
+  // Global keydown listener when palette is open
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSelectedIndex((prev) => (allItems.length > 0 ? (prev + 1) % allItems.length : 0));
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSelectedIndex((prev) =>
+          allItems.length > 0 ? (prev - 1 + allItems.length) % allItems.length : 0
+        );
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (allItems[selectedIndex]) {
+          allItems[selectedIndex].action();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, allItems, selectedIndex, onClose]);
+
+  if (!isOpen) return null;
 
   return (
     <div
@@ -199,7 +237,6 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
               setQuery(e.target.value);
               setSelectedIndex(0);
             }}
-            onKeyDown={handleKeyDown}
             placeholder="Ketik nama board, kartu tugas, atau aksi cepat..."
             className="flex-1 text-sm bg-transparent outline-none text-boho-espresso placeholder-boho-clay"
           />
@@ -209,7 +246,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         </div>
 
         {/* Results List */}
-        <div className="p-2 overflow-y-auto space-y-1">
+        <div ref={resultsContainerRef} className="p-2 overflow-y-auto space-y-1">
           {allItems.length === 0 ? (
             <div className="py-8 text-center text-xs text-boho-clay">
               Tidak ada hasil untuk &quot;{query}&quot;
@@ -220,6 +257,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
               return (
                 <div
                   key={item.id}
+                  data-index={idx}
                   onClick={item.action}
                   onMouseEnter={() => setSelectedIndex(idx)}
                   className={`flex items-center gap-3 px-3 py-2 rounded-xl text-xs cursor-pointer transition-colors ${
