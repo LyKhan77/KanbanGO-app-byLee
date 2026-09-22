@@ -11,6 +11,8 @@ import {
   Trash2,
   Check
 } from 'lucide-react';
+import { CARD_COVER_COLORS } from '../../utils/colors';
+import { renderMarkdownToHtml } from '../../utils/markdown';
 
 interface CardDetailModalProps {
   card: Card | null;
@@ -43,6 +45,7 @@ export const CardDetailModal: React.FC<CardDetailModalProps> = ({
   const [dueDate, setDueDate] = useState(card.dueDate || '');
   const [newTagInput, setNewTagInput] = useState('');
   const [newChecklistText, setNewChecklistText] = useState('');
+  const [descriptionTab, setDescriptionTab] = useState<'write' | 'preview'>('write');
 
   useEffect(() => {
     setTitle(card.title);
@@ -105,16 +108,46 @@ export const CardDetailModal: React.FC<CardDetailModalProps> = ({
       <div className="w-full max-w-2xl bg-boho-linen border border-boho-canvas rounded-2xl shadow-2xl p-6 font-sans text-boho-espresso max-h-[90vh] flex flex-col">
         {/* Header with Title Input & Close Button */}
         <div className="flex items-start justify-between gap-4 pb-4 border-b border-boho-canvas/60">
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Judul kartu tugas..."
-            className="flex-1 font-serif font-bold text-xl text-boho-espresso bg-transparent border-b border-transparent hover:border-boho-clay focus:border-terracotta focus:outline-none transition-colors px-1"
-          />
+          <div className="flex-1 min-w-0">
+            {/* Bohemian Cover Color Chips */}
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-xs text-boho-clay font-medium">Aksen Kartu:</span>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {CARD_COVER_COLORS.map((c) => (
+                  <button
+                    key={c.key}
+                    type="button"
+                    title={c.label}
+                    onClick={() => onUpdateCard(card.id, { coverColor: c.key })}
+                    className={`w-5 h-5 rounded-full border transition-all flex items-center justify-center ${
+                      (card.coverColor || 'none') === c.key
+                        ? 'ring-2 ring-offset-1 ring-terracotta scale-110'
+                        : 'hover:scale-105 opacity-80 hover:opacity-100'
+                    }`}
+                    style={{
+                      backgroundColor: c.key === 'none' ? '#fdfbf7' : c.accent,
+                      borderColor: c.key === 'none' ? '#d4c5b3' : c.accent
+                    }}
+                  >
+                    {(card.coverColor || 'none') === c.key && (
+                      <Check className={`w-3 h-3 ${c.key === 'none' ? 'text-boho-espresso' : 'text-white'}`} />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Judul kartu tugas..."
+              className="w-full font-serif font-bold text-xl text-boho-espresso bg-transparent border-b border-transparent hover:border-boho-clay focus:border-terracotta focus:outline-none transition-colors px-1"
+            />
+          </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-boho-clay hover:text-boho-espresso rounded-xl hover:bg-boho-sand transition-colors"
+            className="p-1.5 text-boho-clay hover:text-boho-espresso rounded-xl hover:bg-boho-sand transition-colors shrink-0"
           >
             <X className="w-5 h-5" />
           </button>
@@ -217,16 +250,52 @@ export const CardDetailModal: React.FC<CardDetailModalProps> = ({
 
           {/* Description */}
           <div className="bg-white/80 p-3.5 rounded-xl border border-boho-canvas">
-            <label className="block text-xs font-semibold uppercase tracking-wider text-boho-walnut mb-2">
-              Catatan & Deskripsi Tugas
-            </label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Tuliskan catatan detail, referensi, atau instruksi pengerjaan..."
-              rows={4}
-              className="w-full px-3 py-2 text-xs bg-boho-linen/60 border border-boho-canvas rounded-lg focus:outline-none focus:border-terracotta resize-y leading-relaxed text-boho-espresso"
-            />
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-xs font-semibold uppercase tracking-wider text-boho-walnut">
+                Catatan & Deskripsi Tugas
+              </label>
+              <div className="flex items-center bg-boho-sand/60 rounded-lg p-0.5 border border-boho-canvas text-xs">
+                <button
+                  type="button"
+                  onClick={() => setDescriptionTab('write')}
+                  className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
+                    descriptionTab === 'write'
+                      ? 'bg-white text-boho-espresso shadow-sm font-semibold'
+                      : 'text-boho-clay hover:text-boho-espresso'
+                  }`}
+                >
+                  Tulis
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDescriptionTab('preview')}
+                  className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
+                    descriptionTab === 'preview'
+                      ? 'bg-white text-boho-espresso shadow-sm font-semibold'
+                      : 'text-boho-clay hover:text-boho-espresso'
+                  }`}
+                >
+                  Pratinjau
+                </button>
+              </div>
+            </div>
+
+            {descriptionTab === 'write' ? (
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Tuliskan catatan detail, referensi, atau instruksi pengerjaan..."
+                rows={4}
+                className="w-full px-3 py-2 text-xs bg-boho-linen/60 border border-boho-canvas rounded-lg focus:outline-none focus:border-terracotta resize-y leading-relaxed text-boho-espresso"
+              />
+            ) : (
+              <div
+                className="min-h-[96px] p-3 text-xs bg-boho-linen/40 border border-boho-canvas rounded-lg text-boho-espresso overflow-y-auto leading-relaxed"
+                dangerouslySetInnerHTML={{
+                  __html: renderMarkdownToHtml(description) || '<p class="text-boho-clay italic">Tidak ada deskripsi.</p>'
+                }}
+              />
+            )}
           </div>
 
           {/* Interactive Checklist Subtasks */}

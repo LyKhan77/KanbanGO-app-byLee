@@ -3,6 +3,7 @@ import { Draggable } from '@hello-pangea/dnd';
 import { Card, ChecklistItem } from '../../../shared/types';
 import { Calendar, Tag, CheckSquare, AlertCircle } from 'lucide-react';
 import { getTodayDateString } from '../../utils/scheduler';
+import { getCardCoverStyle } from '../../utils/colors';
 
 interface CardItemProps {
   card: Card;
@@ -12,6 +13,7 @@ interface CardItemProps {
 }
 
 export const CardItem: React.FC<CardItemProps> = ({ card, index, checklists = [], onClick }) => {
+  const coverStyle = getCardCoverStyle(card.coverColor);
   const today = getTodayDateString(new Date());
   const isOverdue = card.dueDate && card.dueDate < today;
   const isDueToday = card.dueDate && card.dueDate === today;
@@ -48,9 +50,23 @@ export const CardItem: React.FC<CardItemProps> = ({ card, index, checklists = []
               : 'hover:border-terracotta/60 hover:shadow-md'
           }`}
           style={{
-            ...provided.draggableProps.style
+            ...provided.draggableProps.style,
+            backgroundColor: snapshot.isDragging
+              ? undefined
+              : card.coverColor && card.coverColor !== 'none'
+              ? coverStyle.bgTint
+              : undefined
           }}
         >
+          {/* Card Cover Top Accent Bar */}
+          {card.coverColor && card.coverColor !== 'none' && (
+            <div
+              data-testid="card-cover-bar"
+              className="h-1.5 w-full rounded-t-xl -mt-3.5 -mx-3.5 mb-2.5"
+              style={{ backgroundColor: coverStyle.accent, width: 'calc(100% + 28px)' }}
+            />
+          )}
+
           {/* Priority & Due Date Badges */}
           <div className="flex items-center justify-between gap-1.5 mb-2">
             {priorityStyle && (
