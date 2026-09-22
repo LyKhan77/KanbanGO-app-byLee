@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { CardItem } from '../src/renderer/src/components/board/CardItem';
@@ -18,6 +18,10 @@ vi.mock('@hello-pangea/dnd', () => ({
 }));
 
 describe('CardItem with Bohemian Cover', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   const mockCard: Card = {
     id: 'c1',
     boardId: 'b1',
@@ -42,7 +46,18 @@ describe('CardItem with Bohemian Cover', () => {
     expect(accentBar?.getAttribute('style')).toContain('background-color: rgb(200, 109, 81)');
   });
 
-  it('does not render accent bar when coverColor is none or undefined', () => {
+  it('applies blended white background with tint when coverColor is set', () => {
+    const { container } = render(
+      <CardItem card={mockCard} index={0} onClick={vi.fn()} />
+    );
+
+    const cardElement = container.firstElementChild as HTMLElement;
+    expect(cardElement.className).toContain('overflow-hidden');
+    expect(cardElement.getAttribute('style')).toContain('linear-gradient(rgba(200, 109, 81, 0.05), rgba(200, 109, 81, 0.05))');
+    expect(cardElement.getAttribute('style')).toMatch(/rgb\(255,\s*255,\s*255\)|#ffffff/);
+  });
+
+  it('does not render accent bar or background tint when coverColor is none', () => {
     const plainCard: Card = { ...mockCard, coverColor: 'none' };
     const { container } = render(
       <CardItem card={plainCard} index={0} onClick={vi.fn()} />
@@ -50,10 +65,28 @@ describe('CardItem with Bohemian Cover', () => {
 
     const accentBar = container.querySelector('[data-testid="card-cover-bar"]');
     expect(accentBar).toBeNull();
+    const cardElement = container.firstElementChild as HTMLElement;
+    expect(cardElement.style.background).toBe('');
+  });
+
+  it('does not render accent bar or background tint when coverColor is undefined', () => {
+    const plainCard: Card = { ...mockCard, coverColor: undefined };
+    const { container } = render(
+      <CardItem card={plainCard} index={0} onClick={vi.fn()} />
+    );
+
+    const accentBar = container.querySelector('[data-testid="card-cover-bar"]');
+    expect(accentBar).toBeNull();
+    const cardElement = container.firstElementChild as HTMLElement;
+    expect(cardElement.style.background).toBe('');
   });
 });
 
 describe('CardDetailModal with Cover Picker and Markdown Preview', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   const mockCard: Card = {
     id: 'c1',
     boardId: 'b1',
@@ -114,5 +147,122 @@ describe('CardDetailModal with Cover Picker and Markdown Preview', () => {
 
     const emEl = screen.getByText('miring');
     expect(emEl.tagName).toBe('EM');
+  });
+
+  it('renders fallback message in preview tab when description is whitespace-only', () => {
+    const whitespaceCard: Card = { ...mockCard, description: '   \n\t  ' };
+    render(
+      <CardDetailModal
+        card={whitespaceCard}
+        isOpen={true}
+        checklists={[]}
+        onClose={vi.fn()}
+        onUpdateCard={mockUpdateCard}
+        onDeleteCard={vi.fn()}
+        onCreateChecklist={vi.fn()}
+        onToggleChecklist={vi.fn()}
+        onDeleteChecklist={vi.fn()}
+      />
+    );
+
+    const previewTab = screen.getByRole('button', { name: /Pratinjau/i });
+    fireEvent.click(previewTab);
+
+    expect(screen.getByText('Tidak ada deskripsi.')).toBeDefined();
+  });
+
+  it('preserves edited title and description when clicking a color chip', () => {
+    const { rerender } = render(
+      <CardDetailModal
+        card={mockCard}
+        isOpen={true}
+        checklists={[]}
+        onClose={vi.fn()}
+        onUpdateCard={mockUpdateCard}
+        onDeleteCard={vi.fn()}
+        onCreateChecklist={vi.fn()}
+        onToggleChecklist={vi.fn()}
+        onDeleteChecklist={vi.fn()}
+      />
+    );
+
+    const titleInput = screen.getByPlaceholderText(/Judul kartu tugas.../i) as HTMLInputElement;
+    const descTextarea = screen.getByPlaceholderText(/Tuliskan catatan detail/i) as HTMLTextAreaElement;
+
+    fireEvent.change(titleInput, { target: { value: 'Draft Judul Baru' } });
+    fireEvent.change(descTextarea, { target: { value: 'Draft Deskripsi Baru' } });
+
+    const terracottaChip = screen.getByTitle(/Terracotta/i);
+    fireEvent.click(terracottaChip);
+
+    // Simulate parent re-rendering with updated coverColor on the card prop
+    rerender(
+      <CardDetailModal
+        card={{ ...mockCard, coverColor: 'terracotta' }}
+        isOpen={true}
+        checklists={[]}
+        onClose={vi.fn()}
+        onUpdateCard={mockUpdateCard}
+        onDeleteCard={vi.fn()}
+        onCreateChecklist={vi.fn()}
+        onToggleChecklist={vi.fn()}
+        onDeleteChecklist={vi.fn()}
+      />
+    );
+
+    expect(titleInput.value).toBe('Draft Judul Baru');
+    expect(descTextarea.value).toBe('Draft Deskripsi Baru');
+  });
+
+  it('saves title and description on blur', () => {
+    render(
+      <CardDetailModal
+        card={mockCard}
+        isOpen={true}
+        checklists={[]}
+        onClose={vi.fn()}
+        onUpdateCard={mockUpdateCard}
+        onDeleteCard={vi.fn()}
+        onCreateChecklist={vi.fn()}
+        onToggleChecklist={vi.fn()}
+        onDeleteChecklist={vi.fn()}
+      />
+    );
+
+    const titleInput = screen.getByPlaceholderText(/Judul kartu tugas.../i);
+    fireEvent.change(titleInput, { target: { value: 'Judul Baru Disimpan' } });
+    fireEvent.blur(titleInput);
+    expect(mockUpdateCard).toHaveBeenCalledWith('c1', { title: 'Judul Baru Disimpan' });
+
+    const descTextarea = screen.getByPlaceholderText(/Tuliskan catatan detail/i);
+    fireEvent.change(descTextarea, { target: { value: 'Deskripsi Baru Disimpan' } });
+    fireEvent.blur(descTextarea);
+    expect(mockUpdateCard).toHaveBeenCalledWith('c1', { description: 'Deskripsi Baru Disimpan' });
+  });
+
+  it('flushes pending changes when closing modal', () => {
+    const mockClose = vi.fn();
+    render(
+      <CardDetailModal
+        card={mockCard}
+        isOpen={true}
+        checklists={[]}
+        onClose={mockClose}
+        onUpdateCard={mockUpdateCard}
+        onDeleteCard={vi.fn()}
+        onCreateChecklist={vi.fn()}
+        onToggleChecklist={vi.fn()}
+        onDeleteChecklist={vi.fn()}
+      />
+    );
+
+    const titleInput = screen.getByPlaceholderText(/Judul kartu tugas.../i);
+    fireEvent.change(titleInput, { target: { value: 'Pending Title on Close' } });
+
+    const closeButton = screen.getByRole('button', { name: /Tutup/i });
+    fireEvent.click(closeButton);
+
+    expect(mockUpdateCard).toHaveBeenCalledWith('c1', expect.objectContaining({ title: 'Pending Title on Close' }));
+    expect(mockClose).toHaveBeenCalled();
   });
 });

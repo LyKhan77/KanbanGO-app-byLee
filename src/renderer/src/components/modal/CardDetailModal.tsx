@@ -52,7 +52,7 @@ export const CardDetailModal: React.FC<CardDetailModalProps> = ({
     setDescription(card.description);
     setPriority(card.priority);
     setDueDate(card.dueDate || '');
-  }, [card]);
+  }, [card.id]);
 
   // Debounced auto-save for title & description
   useEffect(() => {
@@ -62,16 +62,48 @@ export const CardDetailModal: React.FC<CardDetailModalProps> = ({
       }
     }, 400);
     return () => clearTimeout(timer);
-  }, [title, description]);
+  }, [title, description, card.id, card.title, card.description]);
+
+  const handleSaveTitle = () => {
+    if (title !== card.title) {
+      onUpdateCard(card.id, { title });
+    }
+  };
+
+  const handleSaveDescription = () => {
+    if (description !== card.description) {
+      onUpdateCard(card.id, { description });
+    }
+  };
+
+  const handleClose = () => {
+    if (title !== card.title || description !== card.description) {
+      onUpdateCard(card.id, { title, description });
+    }
+    onClose();
+  };
+
+  const handleCoverColorChange = (coverColor: string) => {
+    const updates: Partial<Card> = { coverColor: coverColor as any };
+    if (title !== card.title) updates.title = title;
+    if (description !== card.description) updates.description = description;
+    onUpdateCard(card.id, updates);
+  };
 
   const handlePriorityChange = (newPriority: 'low' | 'medium' | 'high' | 'none') => {
     setPriority(newPriority);
-    onUpdateCard(card.id, { priority: newPriority });
+    const updates: Partial<Card> = { priority: newPriority };
+    if (title !== card.title) updates.title = title;
+    if (description !== card.description) updates.description = description;
+    onUpdateCard(card.id, updates);
   };
 
   const handleDueDateChange = (newDate: string) => {
     setDueDate(newDate);
-    onUpdateCard(card.id, { dueDate: newDate || undefined });
+    const updates: Partial<Card> = { dueDate: newDate || undefined };
+    if (title !== card.title) updates.title = title;
+    if (description !== card.description) updates.description = description;
+    onUpdateCard(card.id, updates);
   };
 
   const handleAddTag = (e: React.FormEvent) => {
@@ -118,7 +150,7 @@ export const CardDetailModal: React.FC<CardDetailModalProps> = ({
                     key={c.key}
                     type="button"
                     title={c.label}
-                    onClick={() => onUpdateCard(card.id, { coverColor: c.key })}
+                    onClick={() => handleCoverColorChange(c.key)}
                     className={`w-5 h-5 rounded-full border transition-all flex items-center justify-center ${
                       (card.coverColor || 'none') === c.key
                         ? 'ring-2 ring-offset-1 ring-terracotta scale-110'
@@ -141,12 +173,13 @@ export const CardDetailModal: React.FC<CardDetailModalProps> = ({
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
+              onBlur={handleSaveTitle}
               placeholder="Judul kartu tugas..."
               className="w-full font-serif font-bold text-xl text-boho-espresso bg-transparent border-b border-transparent hover:border-boho-clay focus:border-terracotta focus:outline-none transition-colors px-1"
             />
           </div>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="p-1.5 text-boho-clay hover:text-boho-espresso rounded-xl hover:bg-boho-sand transition-colors shrink-0"
           >
             <X className="w-5 h-5" />
@@ -284,15 +317,18 @@ export const CardDetailModal: React.FC<CardDetailModalProps> = ({
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
+                onBlur={handleSaveDescription}
                 placeholder="Tuliskan catatan detail, referensi, atau instruksi pengerjaan..."
                 rows={4}
                 className="w-full px-3 py-2 text-xs bg-boho-linen/60 border border-boho-canvas rounded-lg focus:outline-none focus:border-terracotta resize-y leading-relaxed text-boho-espresso"
               />
             ) : (
               <div
-                className="min-h-[96px] p-3 text-xs bg-boho-linen/40 border border-boho-canvas rounded-lg text-boho-espresso overflow-y-auto leading-relaxed"
+                className="min-h-[96px] max-h-64 p-3 text-xs bg-boho-linen/40 border border-boho-canvas rounded-lg text-boho-espresso overflow-y-auto leading-relaxed break-words"
                 dangerouslySetInnerHTML={{
-                  __html: renderMarkdownToHtml(description) || '<p class="text-boho-clay italic">Tidak ada deskripsi.</p>'
+                  __html: !description?.trim()
+                    ? '<p class="text-boho-clay italic">Tidak ada deskripsi.</p>'
+                    : renderMarkdownToHtml(description)
                 }}
               />
             )}
@@ -396,7 +432,7 @@ export const CardDetailModal: React.FC<CardDetailModalProps> = ({
           </button>
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleClose}
             className="px-5 py-2 bg-boho-sand hover:bg-boho-canvas text-boho-espresso text-xs font-medium rounded-xl border border-boho-canvas transition-colors"
           >
             Tutup

@@ -44,17 +44,17 @@ export const CardItem: React.FC<CardItemProps> = ({ card, index, checklists = []
           {...provided.draggableProps}
           {...provided.dragHandleProps}
           onClick={onClick}
-          className={`group p-3.5 bg-white rounded-xl border border-boho-canvas/80 cursor-grab active:cursor-grabbing select-none transition-all duration-200 ${
+          className={`group p-3.5 bg-white rounded-xl overflow-hidden border border-boho-canvas/80 cursor-grab active:cursor-grabbing select-none transition-all duration-200 ${
             snapshot.isDragging
               ? 'shadow-2xl ring-2 ring-terracotta/40 rotate-[1.5deg] scale-[1.02] bg-boho-linen'
               : 'hover:border-terracotta/60 hover:shadow-md'
           }`}
           style={{
             ...provided.draggableProps.style,
-            backgroundColor: snapshot.isDragging
+            background: snapshot.isDragging
               ? undefined
               : card.coverColor && card.coverColor !== 'none'
-              ? coverStyle.bgTint
+              ? `linear-gradient(${coverStyle.bgTint}, ${coverStyle.bgTint}) #ffffff`
               : undefined
           }}
         >
