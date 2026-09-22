@@ -24,7 +24,7 @@ describe('Color Palette Utilities', () => {
       expect(style.label).toBeTruthy();
       expect(style.accent).toBeTruthy();
       expect(style.bgTint).toBeTruthy();
-      expect(style.border).toBeTruthy();
+      expect(style.border).toMatch(/^#[0-9a-fA-F]{6}$/);
     });
 
     const terracotta = getCardCoverStyle('terracotta');
@@ -33,6 +33,13 @@ describe('Color Palette Utilities', () => {
 
     const none = getCardCoverStyle('none');
     expect(none.accent).toBe('transparent');
+    expect(none.border).toBe('#e0d2bf');
+  });
+
+  it('ensures all cover color border values match 6-digit hex format', () => {
+    CARD_COVER_COLORS.forEach((style) => {
+      expect(style.border).toMatch(/^#[0-9a-fA-F]{6}$/);
+    });
   });
 
   it('falls back to none style for undefined or unknown color', () => {
@@ -57,23 +64,47 @@ describe('Markdown Parser Utility', () => {
     expect(output).toContain('coret</del>');
   });
 
-  it('correctly parses task list checkboxes', () => {
+  it('protects inline code containing asterisks from markdown italic/bold parsing', () => {
+    const input = 'Hitung rumus: `const x = a * b * c;` dan `y = d * e`.';
+    const output = renderMarkdownToHtml(input);
+    expect(output).toContain('<code');
+    expect(output).toContain('const x = a * b * c;</code>');
+    expect(output).toContain('y = d * e</code>');
+    expect(output).not.toContain('<em>');
+    expect(output).not.toContain('<strong>');
+  });
+
+  it('correctly parses task list checkboxes and avoids trailing br', () => {
     const input = '- [ ] Task pending\n- [x] Task selesai';
     const output = renderMarkdownToHtml(input);
     expect(output).toContain('type="checkbox"');
     expect(output).toContain('checked');
     expect(output).toContain('Task selesai');
     expect(output).toContain('Task pending');
+    expect(output).not.toContain('</div><br />');
   });
 
-  it('correctly parses bullet points and code blocks', () => {
+  it('correctly parses bullet points, wraps in ul, and handles code blocks', () => {
     const input = '- Poin satu\n- Poin dua\n`const x = 10;`';
     const output = renderMarkdownToHtml(input);
+    expect(output).toContain('<ul class="list-disc pl-4 my-1 space-y-0.5">');
     expect(output).toContain('<li');
     expect(output).toContain('Poin satu</li>');
     expect(output).toContain('Poin dua</li>');
     expect(output).toContain('<code');
     expect(output).toContain('const x = 10;</code>');
+    expect(output).not.toContain('</ul><br />');
+  });
+
+  it('normalizes CRLF line endings to LF correctly', () => {
+    const input = '# Header CRLF\r\n- Item 1\r\n- Item 2\r\nBaris 1\r\nBaris 2';
+    const output = renderMarkdownToHtml(input);
+    expect(output).toContain('<h2');
+    expect(output).toContain('Header CRLF</h2>');
+    expect(output).toContain('<ul class="list-disc pl-4 my-1 space-y-0.5">');
+    expect(output).toContain('Item 1</li><li class="text-xs text-boho-walnut">Item 2</li></ul>');
+    expect(output).toContain('Baris 1<br />Baris 2');
+    expect(output).not.toContain('\r');
   });
 
   it('escapes raw HTML to prevent XSS injection', () => {
@@ -83,7 +114,7 @@ describe('Markdown Parser Utility', () => {
     expect(output).toContain('&lt;script&gt;');
   });
 
-  it('handles empty input and headers', () => {
+  it('handles empty input and headers without extra br', () => {
     expect(renderMarkdownToHtml('')).toBe('');
     const headers = '# Judul 1\n## Judul 2\n### Judul 3';
     const output = renderMarkdownToHtml(headers);
@@ -93,5 +124,7 @@ describe('Markdown Parser Utility', () => {
     expect(output).toContain('Judul 2</h3>');
     expect(output).toContain('<h4');
     expect(output).toContain('Judul 3</h4>');
+    expect(output).not.toContain('</h2><br />');
+    expect(output).not.toContain('</h3><br />');
   });
 });

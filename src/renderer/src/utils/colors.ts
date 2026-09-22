@@ -9,7 +9,7 @@ export interface CardCoverStyle {
 }
 
 export const CARD_COVER_COLORS: CardCoverStyle[] = [
-  { key: 'none', label: 'Polos', accent: 'transparent', bgTint: 'transparent', border: 'border-boho-canvas' },
+  { key: 'none', label: 'Polos', accent: 'transparent', bgTint: 'transparent', border: '#e0d2bf' },
   { key: 'terracotta', label: 'Terracotta', accent: '#c86d51', bgTint: 'rgba(200, 109, 81, 0.05)', border: '#ebd9c8' },
   { key: 'sage', label: 'Sage', accent: '#8a9a5b', bgTint: 'rgba(138, 154, 91, 0.05)', border: '#dbe2d4' },
   { key: 'ochre', label: 'Ochre', accent: '#e0a96d', bgTint: 'rgba(224, 169, 109, 0.05)', border: '#f2e3ce' },
