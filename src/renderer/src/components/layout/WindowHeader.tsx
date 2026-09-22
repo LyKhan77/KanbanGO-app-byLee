@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useKanban } from '../../context/KanbanContext';
 import { Minus, Square, X, Feather, Plus, Layout } from 'lucide-react';
 
@@ -13,8 +13,12 @@ export const WindowHeader: React.FC<WindowHeaderProps> = ({ onOpenCommandPalette
     openBoardIds,
     openBoardTab,
     closeBoardTab,
-    createBoard
+    createBoard,
+    reorderBoardTabs
   } = useKanban();
+
+  const [draggedTabIndex, setDraggedTabIndex] = useState<number | null>(null);
+  const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
 
   const handleMinimize = () => {
     window.electronAPI?.minimizeWindow?.();
@@ -69,7 +73,7 @@ export const WindowHeader: React.FC<WindowHeaderProps> = ({ onOpenCommandPalette
             e.currentTarget.scrollLeft += e.deltaY;
           }}
         >
-          {openBoards.map((board) => {
+          {openBoards.map((board, index) => {
             const isActive = board.id === activeBoardId;
             return (
               <div
@@ -77,6 +81,38 @@ export const WindowHeader: React.FC<WindowHeaderProps> = ({ onOpenCommandPalette
                 role="tab"
                 aria-selected={isActive}
                 tabIndex={0}
+                draggable={true}
+                onDragStart={(e) => {
+                  setDraggedTabIndex(index);
+                  e.dataTransfer.setData('text/plain', index.toString());
+                  e.dataTransfer.effectAllowed = 'move';
+                }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = 'move';
+                  if (dropTargetIndex !== index) {
+                    setDropTargetIndex(index);
+                  }
+                }}
+                onDragLeave={() => {
+                  if (dropTargetIndex === index) {
+                    setDropTargetIndex(null);
+                  }
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  const sourceIndexStr = e.dataTransfer.getData('text/plain');
+                  const sourceIdx = sourceIndexStr ? parseInt(sourceIndexStr, 10) : draggedTabIndex;
+                  if (sourceIdx !== null && !isNaN(sourceIdx) && sourceIdx !== index) {
+                    reorderBoardTabs(sourceIdx, index);
+                  }
+                  setDraggedTabIndex(null);
+                  setDropTargetIndex(null);
+                }}
+                onDragEnd={() => {
+                  setDraggedTabIndex(null);
+                  setDropTargetIndex(null);
+                }}
                 onClick={() => openBoardTab(board.id)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
@@ -88,6 +124,8 @@ export const WindowHeader: React.FC<WindowHeaderProps> = ({ onOpenCommandPalette
                   isActive
                     ? 'bg-white text-boho-espresso font-semibold border-terracotta/40 shadow-xs'
                     : 'bg-transparent text-boho-walnut hover:bg-boho-canvas/50 border-transparent'
+                } ${draggedTabIndex === index ? 'opacity-40 scale-95' : ''} ${
+                  dropTargetIndex === index && draggedTabIndex !== index ? 'border-l-2 border-l-terracotta' : ''
                 }`}
                 title={board.title}
               >
