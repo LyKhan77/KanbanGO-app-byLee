@@ -6,20 +6,20 @@ export const WindowHeader: React.FC = () => {
   const { activeBoard } = useKanban();
 
   const handleMinimize = () => {
-    (window as any).electronAPI?.minimizeWindow?.();
+    window.electronAPI?.minimizeWindow?.();
   };
 
   const handleMaximize = () => {
-    (window as any).electronAPI?.maximizeWindow?.();
+    window.electronAPI?.maximizeWindow?.();
   };
 
   const handleClose = () => {
-    (window as any).electronAPI?.closeWindow?.();
+    window.electronAPI?.closeWindow?.();
   };
 
   const handleDoubleClick = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('.app-no-drag')) return;
-    (window as any).electronAPI?.maximizeWindow?.();
+    window.electronAPI?.maximizeWindow?.();
   };
 
   return (
@@ -28,7 +28,7 @@ export const WindowHeader: React.FC = () => {
       className="h-10 bg-boho-sand/70 border-b border-boho-canvas/80 flex items-center justify-between px-3 select-none app-drag font-sans text-xs"
     >
       {/* Brand & Board info */}
-      <div className="flex items-center gap-2 app-no-drag">
+      <div className="flex items-center gap-2">
         <div className="w-5 h-5 rounded-full bg-terracotta/20 flex items-center justify-center text-terracotta">
           <Feather className="w-3.5 h-3.5" />
         </div>
@@ -48,6 +48,8 @@ export const WindowHeader: React.FC = () => {
       {/* Desktop Window Controls */}
       <div className="flex items-center gap-1 app-no-drag">
         <button
+          type="button"
+          aria-label="Minimize"
           onClick={handleMinimize}
           className="w-7 h-7 flex items-center justify-center rounded-md text-boho-walnut hover:bg-boho-canvas/60 transition-colors"
           title="Minimize"
@@ -55,6 +57,8 @@ export const WindowHeader: React.FC = () => {
           <Minus className="w-3.5 h-3.5" />
         </button>
         <button
+          type="button"
+          aria-label="Maximize"
           onClick={handleMaximize}
           className="w-7 h-7 flex items-center justify-center rounded-md text-boho-walnut hover:bg-boho-canvas/60 transition-colors"
           title="Maximize"
@@ -62,6 +66,8 @@ export const WindowHeader: React.FC = () => {
           <Square className="w-3 h-3" />
         </button>
         <button
+          type="button"
+          aria-label="Close"
           onClick={handleClose}
           className="w-7 h-7 flex items-center justify-center rounded-md text-boho-walnut hover:bg-rose-500 hover:text-white transition-colors"
           title="Close"

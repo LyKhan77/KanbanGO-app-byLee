@@ -38,6 +38,9 @@ describe('WindowHeader Dragging and Window Controls', () => {
 
     const controlGroup = screen.getByTitle('Close').parentElement;
     expect(controlGroup?.classList.contains('app-no-drag')).toBe(true);
+
+    const brandGroup = screen.getByText('KanbanGO!').closest('div');
+    expect(brandGroup?.classList.contains('app-no-drag')).toBe(false);
   });
 
   it('triggers minimize, maximize, and close window calls via electronAPI', () => {
@@ -47,13 +50,21 @@ describe('WindowHeader Dragging and Window Controls', () => {
       </KanbanContext.Provider>
     );
 
-    fireEvent.click(screen.getByTitle('Minimize'));
+    const minimizeBtn = screen.getByRole('button', { name: 'Minimize' });
+    const maximizeBtn = screen.getByRole('button', { name: 'Maximize' });
+    const closeBtn = screen.getByRole('button', { name: 'Close' });
+
+    expect(minimizeBtn.getAttribute('type')).toBe('button');
+    expect(maximizeBtn.getAttribute('type')).toBe('button');
+    expect(closeBtn.getAttribute('type')).toBe('button');
+
+    fireEvent.click(minimizeBtn);
     expect(mockElectronAPI.minimizeWindow).toHaveBeenCalledTimes(1);
 
-    fireEvent.click(screen.getByTitle('Maximize'));
+    fireEvent.click(maximizeBtn);
     expect(mockElectronAPI.maximizeWindow).toHaveBeenCalledTimes(1);
 
-    fireEvent.click(screen.getByTitle('Close'));
+    fireEvent.click(closeBtn);
     expect(mockElectronAPI.closeWindow).toHaveBeenCalledTimes(1);
   });
 
@@ -66,6 +77,30 @@ describe('WindowHeader Dragging and Window Controls', () => {
 
     const header = container.querySelector('header');
     fireEvent.doubleClick(header!);
+    expect(mockElectronAPI.maximizeWindow).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not trigger maximize when double-clicking inside an app-no-drag element', () => {
+    render(
+      <KanbanContext.Provider value={mockContextValue}>
+        <WindowHeader />
+      </KanbanContext.Provider>
+    );
+
+    const closeBtn = screen.getByTitle('Close');
+    fireEvent.doubleClick(closeBtn);
+    expect(mockElectronAPI.maximizeWindow).not.toHaveBeenCalled();
+  });
+
+  it('allows double-clicking brand title to maximize since brand container is draggable', () => {
+    render(
+      <KanbanContext.Provider value={mockContextValue}>
+        <WindowHeader />
+      </KanbanContext.Provider>
+    );
+
+    const brandTitle = screen.getByText('KanbanGO!');
+    fireEvent.doubleClick(brandTitle);
     expect(mockElectronAPI.maximizeWindow).toHaveBeenCalledTimes(1);
   });
 });
