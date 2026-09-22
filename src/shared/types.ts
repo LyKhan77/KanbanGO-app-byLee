@@ -62,6 +62,7 @@ export interface ChecklistItem {
 export interface UserSettings {
   id: string;             // 'default'
   activeBoardId?: string;
+  openBoardIds?: string[];
   isSidebarCollapsed: boolean;
   profile: UserProfile;
   assistant: AssistantConfig;

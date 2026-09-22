@@ -98,6 +98,7 @@ export async function seedInitialData(db: KanbanGODB): Promise<void> {
   const defaultSettings: UserSettings = {
     id: 'default',
     activeBoardId: boardId,
+    openBoardIds: [boardId],
     isSidebarCollapsed: false,
     profile: {
       id: 'profile-default',

@@ -26,6 +26,9 @@ interface KanbanContextType {
   openProfileModal: () => void;
   closeProfileModal: () => void;
   setActiveBoardId: (id: string) => void;
+  openBoardIds: string[];
+  openBoardTab: (boardId: string) => Promise<void>;
+  closeBoardTab: (boardId: string) => Promise<void>;
   createBoard: (title: string, description?: string) => Promise<string>;
   updateBoard: (id: string, updates: Partial<Board>) => Promise<void>;
   deleteBoard: (id: string) => Promise<void>;
@@ -63,6 +66,7 @@ const DEFAULT_ASSISTANT: AssistantConfig = {
 export const KanbanProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [boards, setBoards] = useState<Board[]>([]);
   const [activeBoardId, setActiveBoardIdState] = useState<string | null>(null);
+  const [openBoardIds, setOpenBoardIds] = useState<string[]>([]);
   const [columns, setColumns] = useState<Column[]>([]);
   const [cards, setCards] = useState<Card[]>([]);
   const [checklists, setChecklists] = useState<ChecklistItem[]>([]);
@@ -85,14 +89,22 @@ export const KanbanProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     if (settings) {
       if (settings.profile) setProfile(settings.profile);
       if (settings.assistant) setAssistantConfig(settings.assistant);
-      if (settings.activeBoardId && allBoards.some((b) => b.id === settings.activeBoardId)) {
-        setActiveBoardIdState(settings.activeBoardId);
-      } else if (allBoards.length > 0) {
-        setActiveBoardIdState(allBoards[0].id);
-      }
-    } else if (allBoards.length > 0) {
-      setActiveBoardIdState(allBoards[0].id);
     }
+
+    const rawOpenIds = settings?.openBoardIds || [];
+    const validOpenIds = rawOpenIds.filter((id) => allBoards.some((b) => b.id === id));
+    const effectiveActiveId = (settings?.activeBoardId && allBoards.some((b) => b.id === settings.activeBoardId))
+      ? settings.activeBoardId
+      : (allBoards.length > 0 ? allBoards[0].id : null);
+
+    let finalOpenIds = validOpenIds;
+    if (finalOpenIds.length === 0 && effectiveActiveId) {
+      finalOpenIds = [effectiveActiveId];
+    } else if (effectiveActiveId && !finalOpenIds.includes(effectiveActiveId)) {
+      finalOpenIds = [...finalOpenIds, effectiveActiveId];
+    }
+    setOpenBoardIds(finalOpenIds);
+    setActiveBoardIdState(effectiveActiveId);
     setIsInitialized(true);
   };
 
@@ -130,6 +142,53 @@ export const KanbanProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }
   };
 
+  const openBoardTab = async (boardId: string) => {
+    if (!boards.some((b) => b.id === boardId)) return;
+    const updated = openBoardIds.includes(boardId)
+      ? openBoardIds
+      : [...openBoardIds, boardId];
+    setOpenBoardIds(updated);
+    await setActiveBoardId(boardId);
+    const existing = await db.settings.get('default');
+    if (existing) {
+      await db.settings.update('default', { openBoardIds: updated, activeBoardId: boardId });
+    }
+  };
+
+  const closeBoardTab = async (boardId: string) => {
+    const closedIndex = openBoardIds.indexOf(boardId);
+    if (closedIndex === -1) return;
+
+    let updated = openBoardIds.filter((id) => id !== boardId);
+    let nextActiveId = activeBoardId;
+
+    if (activeBoardId === boardId) {
+      if (updated.length > 0) {
+        const nextIndex = Math.min(closedIndex, updated.length - 1);
+        nextActiveId = updated[nextIndex];
+      } else if (boards.length > 0) {
+        // If user closes last tab, keep at least one tab open
+        const fallback = boards.find((b) => b.id !== boardId) || boards[0];
+        nextActiveId = fallback.id;
+        updated = [fallback.id];
+      } else {
+        nextActiveId = null;
+      }
+      if (nextActiveId) {
+        await setActiveBoardId(nextActiveId);
+      }
+    }
+
+    setOpenBoardIds(updated);
+    const existing = await db.settings.get('default');
+    if (existing) {
+      await db.settings.update('default', {
+        openBoardIds: updated,
+        activeBoardId: nextActiveId || undefined
+      });
+    }
+  };
+
   const createBoard = async (title: string, description?: string) => {
     const id = 'board-' + Date.now();
     const newBoard: Board = {
@@ -149,6 +208,13 @@ export const KanbanProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       { id: 'col-done-' + id, boardId: id, title: 'Selesai', order: 2, accentColor: '#556b56' }
     ];
     await db.columns.bulkAdd(cols);
+
+    const updatedOpenIds = openBoardIds.includes(id) ? openBoardIds : [...openBoardIds, id];
+    setOpenBoardIds(updatedOpenIds);
+    const existing = await db.settings.get('default');
+    if (existing) {
+      await db.settings.update('default', { openBoardIds: updatedOpenIds, activeBoardId: id });
+    }
 
     await refreshData();
     await setActiveBoardId(id);
@@ -170,6 +236,34 @@ export const KanbanProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     const cardIds = crds.map((c) => c.id);
     await db.cards.where('boardId').equals(id).delete();
     await db.checklists.where('cardId').anyOf(cardIds).delete();
+
+    const closedIndex = openBoardIds.indexOf(id);
+    let updatedTabs = openBoardIds.filter((tabId) => tabId !== id);
+    let nextActiveId = activeBoardId;
+
+    if (activeBoardId === id) {
+      if (updatedTabs.length > 0) {
+        const nextIndex = Math.min(closedIndex, updatedTabs.length - 1);
+        nextActiveId = updatedTabs[nextIndex];
+      } else {
+        const remaining = (await db.boards.toArray()).filter((b) => !b.isArchived);
+        if (remaining.length > 0) {
+          nextActiveId = remaining[0].id;
+          updatedTabs = [nextActiveId];
+        } else {
+          nextActiveId = null;
+        }
+      }
+    }
+
+    setOpenBoardIds(updatedTabs);
+    const existing = await db.settings.get('default');
+    if (existing) {
+      await db.settings.update('default', {
+        openBoardIds: updatedTabs,
+        activeBoardId: nextActiveId || undefined
+      });
+    }
 
     await refreshData();
   };
@@ -435,6 +529,9 @@ export const KanbanProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         openProfileModal: () => setIsProfileModalOpen(true),
         closeProfileModal: () => setIsProfileModalOpen(false),
         setActiveBoardId,
+        openBoardIds,
+        openBoardTab,
+        closeBoardTab,
         createBoard,
         updateBoard,
         deleteBoard,
