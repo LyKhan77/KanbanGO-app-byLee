@@ -35,6 +35,15 @@ describe('WindowHeader Tabs UI', () => {
 
     expect(screen.getByText('Board Satu')).toBeDefined();
     expect(screen.getByText('Board Dua')).toBeDefined();
+
+    const activeTab = screen.getByText('Board Satu').closest('div');
+    const inactiveTab = screen.getByText('Board Dua').closest('div');
+
+    expect(activeTab?.className).toContain('bg-white');
+    expect(activeTab?.className).toContain('border-terracotta/40');
+    expect(activeTab?.className).toContain('font-semibold');
+
+    expect(inactiveTab?.className).toContain('bg-transparent');
   });
 
   it('switches active tab when clicking an inactive tab', () => {
@@ -60,6 +69,7 @@ describe('WindowHeader Tabs UI', () => {
 
     fireEvent.click(closeButtons[0]);
     expect(mockCloseTab).toHaveBeenCalledWith('b1');
+    expect(mockOpenTab).not.toHaveBeenCalled();
   });
 
   it('triggers createBoard when clicking add tab button', () => {
@@ -72,5 +82,18 @@ describe('WindowHeader Tabs UI', () => {
     const addButton = screen.getByTitle(/Tambah Board Baru/i);
     fireEvent.click(addButton);
     expect(mockCreateBoard).toHaveBeenCalled();
+  });
+
+  it('calls onOpenCommandPalette when clicking the ⌘K command palette button', () => {
+    const mockOnOpenCommandPalette = vi.fn();
+    render(
+      <KanbanContext.Provider value={mockContextValue}>
+        <WindowHeader onOpenCommandPalette={mockOnOpenCommandPalette} />
+      </KanbanContext.Provider>
+    );
+
+    const cmdKButton = screen.getByText('⌘K');
+    fireEvent.click(cmdKButton);
+    expect(mockOnOpenCommandPalette).toHaveBeenCalledTimes(1);
   });
 });
