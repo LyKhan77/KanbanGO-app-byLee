@@ -42,7 +42,7 @@ interface KanbanContextType {
   updateColumn: (id: string, updates: Partial<Column>) => Promise<void>;
   deleteColumn: (id: string) => Promise<void>;
   reorderColumns: (reordered: Column[]) => Promise<void>;
-  createCard: (columnId: string, title: string) => Promise<string>;
+  createCard: (columnId: string, title: string, initialProps?: Partial<Card>) => Promise<string>;
   updateCard: (id: string, updates: Partial<Card>) => Promise<void>;
   deleteCard: (id: string) => Promise<void>;
   moveCard: (cardId: string, targetColumnId: string, newOrder: number) => Promise<void>;
@@ -286,7 +286,7 @@ export const KanbanProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     });
   };
 
-  const createCard = async (columnId: string, title: string) => {
+  const createCard = async (columnId: string, title: string, initialProps?: Partial<Card>) => {
     if (!activeBoardId) return '';
     const id = 'card-' + Date.now();
     const colCards = cards.filter((c) => c.columnId === columnId);
@@ -300,7 +300,8 @@ export const KanbanProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       priority: 'none',
       tags: [],
       createdAt: Date.now(),
-      updatedAt: Date.now()
+      updatedAt: Date.now(),
+      ...initialProps
     };
     await db.cards.add(newCard);
     setCards((prev) => [...prev, newCard]);

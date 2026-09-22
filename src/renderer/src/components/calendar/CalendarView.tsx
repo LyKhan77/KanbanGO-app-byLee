@@ -138,10 +138,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     setQuickAddDate(null);
     setQuickAddTitle('');
 
-    const newId = await (createCard as any)(targetColumnId, trimmedTitle, { dueDate: dateToSet });
-    if (newId) {
-      await updateCardDueDate(newId, dateToSet);
-    }
+    await createCard(targetColumnId, trimmedTitle, { dueDate: dateToSet });
   };
 
   const getPriorityDot = (priority: Card['priority']) => {
@@ -422,9 +419,9 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                             draggedCardId === card.id ? 'opacity-40' : 'opacity-100'
                           }`}
                           style={{
-                            backgroundColor:
+                            background:
                               card.coverColor && card.coverColor !== 'none'
-                                ? coverStyle.bgTint
+                                ? `linear-gradient(${coverStyle.bgTint}, ${coverStyle.bgTint}) #ffffff`
                                 : '#ffffff',
                             borderColor:
                               card.coverColor && card.coverColor !== 'none'
@@ -513,9 +510,9 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                         draggedCardId === card.id ? 'opacity-40' : 'opacity-100'
                       }`}
                       style={{
-                        backgroundColor:
+                        background:
                           card.coverColor && card.coverColor !== 'none'
-                            ? coverStyle.bgTint
+                            ? `linear-gradient(${coverStyle.bgTint}, ${coverStyle.bgTint}) #ffffff`
                             : '#ffffff',
                         borderColor:
                           card.coverColor && card.coverColor !== 'none'
