@@ -6,6 +6,7 @@ import { db } from '../src/renderer/src/db/db';
 import { Card, CardCoverColor, BoardViewMode } from '../src/shared/types';
 import { KanbanProvider, useKanban } from '../src/renderer/src/context/KanbanContext';
 import { seedInitialData } from '../src/renderer/src/db/seed';
+import { reorderTabs } from '../src/renderer/src/utils/tabUtils';
 
 describe('KanbanContext Expansion & Dexie Persistence Baseline', () => {
   beforeEach(async () => {
@@ -16,34 +17,26 @@ describe('KanbanContext Expansion & Dexie Persistence Baseline', () => {
     await db.settings.clear();
   });
 
-  describe('reorderBoardTabs array manipulation logic', () => {
+  describe('reorderTabs pure utility', () => {
     it('moves index 0 to index 2 in ["b1", "b2", "b3", "b4"] producing ["b2", "b3", "b1", "b4"]', () => {
       const openBoardIds = ['b1', 'b2', 'b3', 'b4'];
-      const sourceIndex = 0;
-      const destIndex = 2;
-
-      // Reorder logic: remove at sourceIndex, insert at destIndex
-      const updated = [...openBoardIds];
-      const [moved] = updated.splice(sourceIndex, 1);
-      updated.splice(destIndex, 0, moved);
-
-      expect(updated).toEqual(['b2', 'b3', 'b1', 'b4']);
+      const result = reorderTabs(openBoardIds, 0, 2);
+      expect(result).toEqual(['b2', 'b3', 'b1', 'b4']);
     });
 
-    it('handles boundary conditions: out-of-bounds or same index without mutation', () => {
+    it('moves index 2 to index 0 producing ["b3", "b1", "b2", "b4"]', () => {
       const openBoardIds = ['b1', 'b2', 'b3', 'b4'];
-      const reorder = (list: string[], src: number, dst: number): string[] => {
-        if (src === dst || src < 0 || dst < 0) return list;
-        if (src >= list.length || dst >= list.length) return list;
-        const res = [...list];
-        const [m] = res.splice(src, 1);
-        res.splice(dst, 0, m);
-        return res;
-      };
+      const result = reorderTabs(openBoardIds, 2, 0);
+      expect(result).toEqual(['b3', 'b1', 'b2', 'b4']);
+    });
 
-      expect(reorder(openBoardIds, 1, 1)).toEqual(openBoardIds);
-      expect(reorder(openBoardIds, -1, 2)).toEqual(openBoardIds);
-      expect(reorder(openBoardIds, 0, 5)).toEqual(openBoardIds);
+    it('handles boundary conditions: out-of-bounds, negative, or identical indices as no-op', () => {
+      const openBoardIds = ['b1', 'b2', 'b3', 'b4'];
+      expect(reorderTabs(openBoardIds, 1, 1)).toEqual(openBoardIds);
+      expect(reorderTabs(openBoardIds, -1, 2)).toEqual(openBoardIds);
+      expect(reorderTabs(openBoardIds, 0, -1)).toEqual(openBoardIds);
+      expect(reorderTabs(openBoardIds, 0, 5)).toEqual(openBoardIds);
+      expect(reorderTabs(openBoardIds, 4, 1)).toEqual(openBoardIds);
     });
   });
 
@@ -237,12 +230,37 @@ describe('KanbanProvider Expanded Features Integration', () => {
     const cardInDb = await db.cards.get(cardId);
     expect(cardInDb?.dueDate).toBe(testDueDate);
 
-    // Also test clearing dueDate (undefined)
+    // Test empty string normalization: "" clears to undefined
     await act(async () => {
+      await result.current.updateCardDueDate(cardId, '');
+    });
+    expect(result.current.cards.find((c) => c.id === cardId)?.dueDate).toBeUndefined();
+    expect((await db.cards.get(cardId))?.dueDate).toBeUndefined();
+
+    // Test whitespace string normalization: "   " clears to undefined
+    await act(async () => {
+      await result.current.updateCardDueDate(cardId, testDueDate);
+    });
+    expect(result.current.cards.find((c) => c.id === cardId)?.dueDate).toBe(testDueDate);
+
+    await act(async () => {
+      await result.current.updateCardDueDate(cardId, '   ');
+    });
+    expect(result.current.cards.find((c) => c.id === cardId)?.dueDate).toBeUndefined();
+    expect((await db.cards.get(cardId))?.dueDate).toBeUndefined();
+
+    // Also test clearing dueDate with explicit undefined
+    await act(async () => {
+      await result.current.updateCardDueDate(cardId, testDueDate);
       await result.current.updateCardDueDate(cardId, undefined);
     });
     expect(result.current.cards.find((c) => c.id === cardId)?.dueDate).toBeUndefined();
     expect((await db.cards.get(cardId))?.dueDate).toBeUndefined();
+
+    // Non-existent card ID does not throw or crash
+    await act(async () => {
+      await result.current.updateCardDueDate('non-existent-card', '2026-12-31');
+    });
 
     unmount();
   });
@@ -266,6 +284,11 @@ describe('KanbanProvider Expanded Features Integration', () => {
 
     const cardInDb = await db.cards.get(cardId);
     expect(cardInDb?.coverColor).toBe('terracotta');
+
+    // Non-existent card ID does not throw or crash
+    await act(async () => {
+      await result.current.updateCardCoverColor('non-existent-card', 'moss');
+    });
 
     unmount();
   });

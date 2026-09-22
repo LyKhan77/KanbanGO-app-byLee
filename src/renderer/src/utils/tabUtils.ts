@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Pure utility functions for multi-board tab state management.
  */
 
@@ -33,4 +33,18 @@ export function resolveNextActiveTab(
 
   const nextIndex = Math.min(closedIndex, updatedTabs.length - 1);
   return { updatedTabs, nextActiveId: updatedTabs[nextIndex] };
+}
+
+/**
+ * Reorders tabs by moving an element from sourceIndex to destIndex.
+ * Returns original array reference if indices are invalid, out of bounds, or identical.
+ */
+export function reorderTabs(tabs: string[], sourceIndex: number, destIndex: number): string[] {
+  if (sourceIndex === destIndex || sourceIndex < 0 || destIndex < 0) return tabs;
+  if (sourceIndex >= tabs.length || destIndex >= tabs.length) return tabs;
+
+  const updated = [...tabs];
+  const [moved] = updated.splice(sourceIndex, 1);
+  updated.splice(destIndex, 0, moved);
+  return updated;
 }

@@ -4,7 +4,7 @@ import { seedInitialData } from '../db/seed';
 import { Board, Column, Card, ChecklistItem, UserProfile, AssistantConfig, BoardViewMode, CardCoverColor } from '../../../shared/types';
 import { shouldTriggerDailyBriefing, getTodayDateString, getCurrentTimeString } from '../utils/scheduler';
 import { generateDailyBriefing } from '../utils/assistantEngine';
-import { resolveNextActiveTab } from '../utils/tabUtils';
+import { resolveNextActiveTab, reorderTabs } from '../utils/tabUtils';
 
 interface KanbanContextType {
   boards: Board[];
@@ -152,10 +152,7 @@ export const KanbanProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
   const setViewMode = async (mode: BoardViewMode) => {
     setViewModeState(mode);
-    const existing = await db.settings.get('default');
-    if (existing) {
-      await db.settings.update('default', { activeViewMode: mode });
-    }
+    await db.settings.update('default', { activeViewMode: mode });
   };
 
   const openBoardTab = async (boardId: string) => {
@@ -179,17 +176,20 @@ export const KanbanProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     });
   };
 
+  const openBoardIdsRef = useRef(openBoardIds);
+  openBoardIdsRef.current = openBoardIds;
+  useEffect(() => {
+    openBoardIdsRef.current = openBoardIds;
+  }, [openBoardIds]);
+
   const reorderBoardTabs = async (sourceIndex: number, destIndex: number) => {
-    if (sourceIndex === destIndex || sourceIndex < 0 || destIndex < 0) return;
-    if (sourceIndex >= openBoardIds.length || destIndex >= openBoardIds.length) return;
+    const current = openBoardIdsRef.current;
+    const updated = reorderTabs(current, sourceIndex, destIndex);
+    if (updated === current) return;
 
-    const updated = [...openBoardIds];
-    const [moved] = updated.splice(sourceIndex, 1);
-    updated.splice(destIndex, 0, moved);
-
+    openBoardIdsRef.current = updated;
     setOpenBoardIds(updated);
-    const existing = await db.settings.get('default');
-    if (existing) {
+    if (updated.length > 0) {
       await db.settings.update('default', { openBoardIds: updated });
     }
   };
@@ -314,19 +314,16 @@ export const KanbanProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   };
 
   const updateCardDueDate = async (cardId: string, dueDate?: string) => {
-    const updatedAt = Date.now();
-    setCards((prev) =>
-      prev.map((c) => (c.id === cardId ? { ...c, dueDate, updatedAt } : c))
-    );
-    await db.cards.update(cardId, { dueDate, updatedAt });
+    const targetCard = cards.find((c) => c.id === cardId);
+    if (!targetCard) return;
+    const normalizedDueDate = dueDate?.trim() ? dueDate.trim() : undefined;
+    await updateCard(cardId, { dueDate: normalizedDueDate });
   };
 
   const updateCardCoverColor = async (cardId: string, coverColor: CardCoverColor) => {
-    const updatedAt = Date.now();
-    setCards((prev) =>
-      prev.map((c) => (c.id === cardId ? { ...c, coverColor, updatedAt } : c))
-    );
-    await db.cards.update(cardId, { coverColor, updatedAt });
+    const targetCard = cards.find((c) => c.id === cardId);
+    if (!targetCard) return;
+    await updateCard(cardId, { coverColor });
   };
 
   const deleteCard = async (id: string) => {
