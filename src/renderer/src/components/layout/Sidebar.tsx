@@ -13,7 +13,8 @@ import {
   Sparkles,
   Heart,
   Download,
-  Upload
+  Upload,
+  Settings
 } from 'lucide-react';
 
 const AVATAR_ICONS: Record<string, React.ElementType> = {
@@ -25,7 +26,11 @@ const AVATAR_ICONS: Record<string, React.ElementType> = {
   heart: Heart
 };
 
-export const Sidebar: React.FC = () => {
+export interface SidebarProps {
+  onOpenSettings?: () => void;
+}
+
+export const Sidebar: React.FC<SidebarProps> = ({ onOpenSettings }) => {
   const {
     boards,
     activeBoardId,
@@ -71,13 +76,25 @@ export const Sidebar: React.FC = () => {
           </button>
         </div>
 
-        <button
-          onClick={openProfileModal}
-          className="w-10 h-10 rounded-full bg-terracotta-light text-terracotta flex items-center justify-center border border-terracotta-border hover:scale-105 transition-all"
-          title={`Profil: ${profile.name}`}
-        >
-          <AvatarIcon className="w-5 h-5" />
-        </button>
+        <div className="flex flex-col items-center gap-2">
+          {onOpenSettings && (
+            <button
+              onClick={onOpenSettings}
+              className="p-2 text-boho-clay hover:text-boho-espresso hover:bg-boho-canvas/50 rounded-xl transition-colors cursor-pointer"
+              title="Pengaturan Aplikasi"
+              aria-label="Pengaturan Aplikasi"
+            >
+              <Settings className="w-5 h-5" />
+            </button>
+          )}
+          <button
+            onClick={openProfileModal}
+            className="w-10 h-10 rounded-full bg-terracotta-light text-terracotta flex items-center justify-center border border-terracotta-border hover:scale-105 transition-all cursor-pointer"
+            title={`Profil: ${profile.name}`}
+          >
+            <AvatarIcon className="w-5 h-5" />
+          </button>
+        </div>
       </aside>
     );
   }
@@ -176,11 +193,11 @@ export const Sidebar: React.FC = () => {
         )}
       </div>
 
-      {/* Bottom Persona Profile Widget */}
-      <div className="p-3 border-t border-boho-canvas/80 bg-boho-sand/90">
+      {/* Bottom Persona Profile Widget & Settings */}
+      <div className="p-3 border-t border-boho-canvas/80 bg-boho-sand/90 flex items-center justify-between gap-2">
         <div
           onClick={openProfileModal}
-          className="flex items-center gap-3 p-2 rounded-xl hover:bg-boho-canvas/50 cursor-pointer transition-colors"
+          className="flex-1 flex items-center gap-3 p-2 rounded-xl hover:bg-boho-canvas/50 cursor-pointer transition-colors min-w-0"
           title="Klik untuk mengubah Persona Profile"
         >
           <div className="w-10 h-10 rounded-full bg-terracotta-light border border-terracotta-border flex items-center justify-center text-terracotta shrink-0 shadow-sm">
@@ -195,6 +212,17 @@ export const Sidebar: React.FC = () => {
             </p>
           </div>
         </div>
+
+        {onOpenSettings && (
+          <button
+            onClick={onOpenSettings}
+            className="p-2 text-boho-clay hover:text-boho-espresso hover:bg-boho-canvas/50 rounded-xl transition-colors cursor-pointer shrink-0"
+            title="Pengaturan Aplikasi"
+            aria-label="Pengaturan Aplikasi"
+          >
+            <Settings className="w-4 h-4" />
+          </button>
+        )}
       </div>
     </aside>
   );

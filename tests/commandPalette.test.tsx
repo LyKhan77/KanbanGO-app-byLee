@@ -82,11 +82,11 @@ describe('Bohemian Command Palette (Ctrl+K / Ctrl+P)', () => {
     );
 
     const input = screen.getByPlaceholderText(/Ketik nama board/i);
-    // At index 0, ArrowUp wraps to last item (which is action-profile)
+    // At index 0, ArrowUp wraps to last item (which is action-settings)
     fireEvent.keyDown(input, { key: 'ArrowUp' });
     fireEvent.keyDown(input, { key: 'Enter' });
 
-    expect(mockQuickAction).toHaveBeenCalledWith('profile');
+    expect(mockQuickAction).toHaveBeenCalledWith('settings');
     expect(mockClose).toHaveBeenCalledTimes(1);
   });
 
@@ -232,6 +232,29 @@ describe('Bohemian Command Palette (Ctrl+K / Ctrl+P)', () => {
     fireEvent.click(profileAction);
 
     expect(mockQuickAction).toHaveBeenCalledWith('profile');
+    expect(mockClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('executes quick action when selecting settings item', () => {
+    render(
+      <CommandPalette
+        isOpen={true}
+        onClose={mockClose}
+        boards={[]}
+        cards={[]}
+        onSelectBoard={mockSelectBoard}
+        onSelectCard={mockSelectCard}
+        onQuickAction={mockQuickAction}
+      />
+    );
+
+    const input = screen.getByPlaceholderText(/Ketik nama board/i);
+    fireEvent.change(input, { target: { value: 'Pengaturan' } });
+
+    const settingsAction = screen.getByText(/Buka Pengaturan Aplikasi/i);
+    fireEvent.click(settingsAction);
+
+    expect(mockQuickAction).toHaveBeenCalledWith('settings');
     expect(mockClose).toHaveBeenCalledTimes(1);
   });
 });

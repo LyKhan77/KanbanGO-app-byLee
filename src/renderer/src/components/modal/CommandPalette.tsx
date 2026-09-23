@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useContext } from 'react';
 import { Board, Card } from '../../../shared/types';
-import { Search, Layout, CheckSquare, Plus, Download, Upload, User, Calendar, RefreshCw } from 'lucide-react';
+import { Search, Layout, CheckSquare, Plus, Download, Upload, User, Calendar, RefreshCw, Settings } from 'lucide-react';
 import { KanbanContext } from '../../context/KanbanContext';
 
 export interface CommandItem {
@@ -29,6 +29,7 @@ export interface CommandPaletteProps {
       | 'profile'
       | 'switch-calendar'
       | 'switch-kanban'
+      | 'settings'
   ) => void;
 }
 
@@ -190,6 +191,18 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         icon: <User className="w-4 h-4 text-terracotta" />,
         action: () => {
           onQuickAction('profile');
+          onClose();
+        }
+      },
+      {
+        id: 'action-settings',
+        type: 'action',
+        title: 'Buka Pengaturan Aplikasi',
+        subtitle: 'Preferensi tema dan status pembaruan versi',
+        category: 'Aplikasi',
+        icon: <Settings className="w-4 h-4 text-terracotta" />,
+        action: () => {
+          onQuickAction('settings');
           onClose();
         }
       }

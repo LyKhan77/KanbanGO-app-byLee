@@ -7,6 +7,7 @@ import { CardDetailModal } from './components/modal/CardDetailModal';
 import { ProfileModal } from './components/profile/ProfileModal';
 import { CommandPalette } from './components/modal/CommandPalette';
 import { UpdateModal } from './components/modal/UpdateModal';
+import { SettingsModal } from './components/modal/SettingsModal';
 import { Card } from '../../shared/types';
 import { db } from './db/db';
 import { exportBoardData, importBoardData } from './utils/backup';
@@ -44,6 +45,7 @@ const KanbanDashboard: React.FC = () => {
 
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [allCards, setAllCards] = useState<Card[]>(cards);
 
   useEffect(() => {
@@ -141,7 +143,7 @@ const KanbanDashboard: React.FC = () => {
 
       {/* Main Workspace Layout */}
       <div className="flex flex-1 overflow-hidden">
-        <Sidebar />
+        <Sidebar onOpenSettings={() => setIsSettingsModalOpen(true)} />
         <BoardCanvas onCardClick={(card) => setSelectedCardId(card.id)} />
       </div>
 
@@ -160,6 +162,12 @@ const KanbanDashboard: React.FC = () => {
 
       {/* Persona Profile Modal */}
       <ProfileModal />
+
+      {/* Application Settings & About Modal */}
+      <SettingsModal
+        isOpen={isSettingsModalOpen}
+        onClose={() => setIsSettingsModalOpen(false)}
+      />
 
       {/* Bohemian Command Palette */}
       <CommandPalette
@@ -194,6 +202,8 @@ const KanbanDashboard: React.FC = () => {
             handleImport();
           } else if (actionKey === 'profile') {
             openProfileModal();
+          } else if (actionKey === 'settings') {
+            setIsSettingsModalOpen(true);
           }
         }}
       />

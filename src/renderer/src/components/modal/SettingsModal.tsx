@@ -77,7 +77,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
             <h3 className="text-xs font-semibold uppercase tracking-wider text-boho-walnut">
               Tentang & Pembaruan Aplikasi
             </h3>
-            <div className="bg-[#fbf9f5] border border-[#e4ded5] rounded-xl p-4 space-y-3">
+            <div className="bg-boho-sand/40 border border-boho-canvas rounded-xl p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <div className="w-9 h-9 rounded-xl bg-terracotta/10 border border-terracotta/20 flex items-center justify-center text-terracotta">
@@ -101,10 +101,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
               <button
                 type="button"
                 onClick={() => checkForUpdates(true)}
-                disabled={updaterStatus === 'checking'}
+                disabled={updaterStatus === 'checking' || updaterStatus === 'downloading'}
                 className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-medium text-white bg-terracotta hover:bg-terracotta-deep disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-xs cursor-pointer"
               >
-                <RefreshCw className={`w-3.5 h-3.5 ${updaterStatus === 'checking' ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`w-3.5 h-3.5 ${updaterStatus === 'checking' || updaterStatus === 'downloading' ? 'animate-spin' : ''}`} />
                 <span>Periksa Pembaruan</span>
               </button>
             </div>
