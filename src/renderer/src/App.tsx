@@ -6,6 +6,7 @@ import { BoardCanvas } from './components/board/BoardCanvas';
 import { CardDetailModal } from './components/modal/CardDetailModal';
 import { ProfileModal } from './components/profile/ProfileModal';
 import { CommandPalette } from './components/modal/CommandPalette';
+import { UpdateModal } from './components/modal/UpdateModal';
 import { Card } from '../../shared/types';
 import { db } from './db/db';
 import { exportBoardData, importBoardData } from './utils/backup';
@@ -28,7 +29,17 @@ const KanbanDashboard: React.FC = () => {
     createBoard,
     openProfileModal,
     setViewMode,
-    refreshData
+    refreshData,
+    isUpdateModalOpen,
+    currentAppVersion,
+    updateInfo,
+    updaterStatus,
+    updateProgress,
+    updateErrorMessage,
+    startAppUpdate,
+    installAppUpdate,
+    closeUpdateModal,
+    ignoreUpdateVersion
   } = useKanban();
 
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
@@ -185,6 +196,20 @@ const KanbanDashboard: React.FC = () => {
             openProfileModal();
           }
         }}
+      />
+
+      {/* Auto-Updater Bohemian Modal */}
+      <UpdateModal
+        isOpen={isUpdateModalOpen}
+        currentVersion={currentAppVersion}
+        updateInfo={updateInfo}
+        status={updaterStatus}
+        progress={updateProgress}
+        errorMessage={updateErrorMessage}
+        onStartDownload={startAppUpdate}
+        onInstall={installAppUpdate}
+        onPostpone={closeUpdateModal}
+        onIgnoreVersion={ignoreUpdateVersion}
       />
     </div>
   );
