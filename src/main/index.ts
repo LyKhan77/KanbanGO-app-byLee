@@ -3,6 +3,7 @@ import { join } from 'path';
 import { electronApp, optimizer, is } from '@electron-toolkit/utils';
 import { setupNotificationHandlers } from './notification';
 import { setupSystemTray } from './tray';
+import { setupAutoUpdater } from './updater';
 
 let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
@@ -64,6 +65,9 @@ app.whenReady().then(() => {
 
   // Native Notification & Window Restore IPC Handlers
   setupNotificationHandlers(ipcMain, () => mainWindow);
+
+  // Auto Updater IPC Handlers & Listeners
+  setupAutoUpdater(ipcMain, () => mainWindow);
 
   // Window Controls IPC
   ipcMain.on('window:minimize', () => {
