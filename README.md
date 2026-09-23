@@ -76,6 +76,28 @@ Unduh installer versi terbaru langsung dari halaman rilis resmi:
 | **Linux** | `KanbanGO-1.0.1-linux.AppImage` | Berkas executable universal Linux (`chmod +x`) |
 | | `KanbanGO-1.0.1-linux.deb` | Paket instalasi Debian / Ubuntu |
 
+### 🍏 Catatan Khusus Pengguna macOS (Gatekeeper)
+
+Jika Anda melihat peringatan seperti *"KanbanGO cannot be opened because Apple cannot check it for malicious software"* atau *"Move to Bin"*, hal ini adalah perilaku standar sistem keamanan **macOS Gatekeeper** untuk aplikasi open-source independen yang belum memiliki sertifikat berbayar Apple Developer ID.
+
+Aplikasi ini 100% aman dan bebas malware. Gunakan salah satu cara mudah berikut untuk membukanya:
+
+1. **Cara Cepat via Terminal (Direkomendasikan):**
+   Buka **Terminal** di Mac Anda dan jalankan perintah:
+   ```bash
+   xattr -cr /Applications/KanbanGO.app
+   ```
+   *(Perintah ini melepas flag karantina unduhan browser, setelah itu aplikasi dapat diklik dan dibuka langsung selamanya).*
+
+2. **Cara via System Settings (Pengaturan Sistem):**
+   - Buka **System Settings** ➔ pilih **Privacy & Security** (Privasi & Keamanan).
+   - Gulir ke bawah ke bagian **Security**, Anda akan melihat pemberitahuan tentang KanbanGO.
+   - Klik tombol **"Open Anyway"** (Tetap Buka), masukkan password Mac / Touch ID Anda, lalu klik **"Open"**.
+
+3. **Cara via Klik Kanan di Finder:**
+   - Buka folder **Applications** di Finder.
+   - Tahan tombol **Control** lalu klik ikon **KanbanGO** (atau klik kanan) ➔ pilih **Open** ➔ klik **Open** pada kotak dialog.
+
 ---
 
 ## 🛠️ Stack Teknologi
