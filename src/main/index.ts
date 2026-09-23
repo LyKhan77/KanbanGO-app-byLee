@@ -17,6 +17,7 @@ function createWindow(): void {
     minHeight: 600,
     show: false,
     frame: false,
+    icon: join(__dirname, '../../resources/icon.png'),
     titleBarStyle: process.platform === 'darwin' ? 'hidden' : undefined,
     autoHideMenuBar: true,
     backgroundColor: '#fdfbf7',
