@@ -72,11 +72,41 @@ export interface ChecklistItem {
 
 // 7. Pengaturan Sistem
 export interface UserSettings {
-  id: string;             // 'default'
+  id?: string;             // 'default'
   activeBoardId?: string;
   openBoardIds?: string[];
   activeViewMode?: BoardViewMode;
-  isSidebarCollapsed: boolean;
-  profile: UserProfile;
-  assistant: AssistantConfig;
+  isSidebarCollapsed?: boolean;
+  profile?: UserProfile;
+  assistant?: AssistantConfig;
+  defaultColumnId?: string;
+  enableNotifications?: boolean;
+  pomodoroDuration?: number;
+  shortBreakDuration?: number;
+  longBreakDuration?: number;
+  theme?: string;
+  ignoredUpdateVersion?: string;
+}
+
+// 8. Auto-Updater Types
+export type UpdaterStatus =
+  | 'idle'
+  | 'checking'
+  | 'available'
+  | 'not-available'
+  | 'downloading'
+  | 'downloaded'
+  | 'error';
+
+export interface UpdateInfo {
+  version: string;
+  releaseDate?: string;
+  releaseNotes?: string;
+}
+
+export interface UpdateProgress {
+  percent: number;
+  bytesPerSecond: number;
+  transferred: number;
+  total: number;
 }
