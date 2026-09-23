@@ -26,7 +26,8 @@ describe('SettingsModal Updater Section', () => {
       </KanbanContext.Provider>
     );
 
-    expect(screen.getByText(/Versi 1.0.0/i)).toBeInTheDocument();
+    expect(screen.getByText(/Tentang & Pembaruan Aplikasi/i)).toBeInTheDocument();
+    expect(screen.getByText(/v1\.0\.0/i)).toBeInTheDocument();
     const checkBtn = screen.getByRole('button', { name: /Periksa Pembaruan/i });
     fireEvent.click(checkBtn);
     expect(mockCheckForUpdates).toHaveBeenCalledWith(true);
@@ -64,6 +65,23 @@ describe('SettingsModal Updater Section', () => {
     );
 
     expect(screen.getByText(/KanbanGO sudah menggunakan versi terbaru/i)).toBeInTheDocument();
+  });
+
+  it('displays available message and Sparkles icon when updaterStatus is available', () => {
+    const contextValue: any = {
+      settings: { theme: 'bohemian-light' },
+      updaterStatus: 'available',
+      currentAppVersion: '1.0.0',
+      checkForUpdates: vi.fn()
+    };
+
+    render(
+      <KanbanContext.Provider value={contextValue}>
+        <SettingsModal isOpen={true} onClose={vi.fn()} />
+      </KanbanContext.Provider>
+    );
+
+    expect(screen.getByText(/Versi baru tersedia/i)).toBeInTheDocument();
   });
 
   it('displays error message when updaterStatus is error', () => {

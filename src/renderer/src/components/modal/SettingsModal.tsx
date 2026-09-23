@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useKanban } from '../../context/KanbanContext';
-import { Settings, X, RefreshCw, Feather, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Settings, X, RefreshCw, Feather, CheckCircle2, AlertCircle, Sparkles } from 'lucide-react';
 
 export interface SettingsModalProps {
   isOpen: boolean;
@@ -25,6 +25,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
+
+  const versionDisplay = `v${(currentAppVersion || '1.0.0').replace(/^v/i, '')}`;
 
   return (
     <div
@@ -70,27 +72,31 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
             </div>
           </div>
 
-          {/* Tentang & Pembaruan Aplikasi Card */}
-          <div className="bg-[#fbf9f5] border border-[#e4ded5] rounded-xl p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-terracotta/10 border border-terracotta/20 flex items-center justify-center text-terracotta">
-                  <Feather className="w-5 h-5" />
-                </div>
-                <div>
-                  <h4 className="font-serif font-bold text-sm text-boho-espresso">
-                    KanbanGO Desktop
-                  </h4>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className="px-2 py-0.5 rounded-full text-xs font-mono font-medium bg-terracotta-light text-terracotta border border-terracotta-border">
-                      Versi {currentAppVersion || '1.0.0'}
-                    </span>
-                    <span className="text-[11px] text-boho-clay">
-                      Pembaruan otomatis dari GitHub Releases
-                    </span>
+          {/* Tentang & Pembaruan Aplikasi Section */}
+          <div className="space-y-3">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-boho-walnut">
+              Tentang & Pembaruan Aplikasi
+            </h3>
+            <div className="bg-[#fbf9f5] border border-[#e4ded5] rounded-xl p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-terracotta/10 border border-terracotta/20 flex items-center justify-center text-terracotta">
+                    <Feather className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="font-serif font-bold text-sm text-boho-espresso">
+                      KanbanGO Desktop
+                    </h4>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="px-2 py-0.5 rounded-full text-xs font-mono font-medium bg-terracotta-light text-terracotta border border-terracotta-border">
+                        {versionDisplay}
+                      </span>
+                      <span className="text-[11px] text-boho-clay">
+                        Pembaruan otomatis dari GitHub Releases
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
               <button
                 type="button"
@@ -135,7 +141,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
         </div>
       </div>
     </div>
-  );
+  </div>
+);
 };
 
 export default SettingsModal;
