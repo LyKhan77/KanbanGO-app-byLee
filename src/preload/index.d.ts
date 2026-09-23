@@ -22,7 +22,7 @@ export interface ElectronAPI {
   sendNotification?: (payload: { title: string; body: string }) => void;
   showSaveBackupDialog?: (defaultFileName: string) => Promise<string | null>;
   showOpenBackupDialog?: () => Promise<string | null>;
-  updater: UpdaterAPI;
+  updater?: UpdaterAPI;
 }
 
 declare global {
