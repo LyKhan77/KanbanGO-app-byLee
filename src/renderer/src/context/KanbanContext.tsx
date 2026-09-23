@@ -489,13 +489,17 @@ export const KanbanProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }
   };
 
+  const isManualCheckRef = useRef(false);
+
   const checkForUpdates = async (manual = false) => {
+    isManualCheckRef.current = manual;
     setUpdaterStatus('checking');
     setUpdateErrorMessage(null);
     if (window.electronAPI?.updater) {
       try {
         await window.electronAPI.updater.check(manual);
       } catch (err: any) {
+        isManualCheckRef.current = false;
         setUpdaterStatus('error');
         setUpdateErrorMessage(err?.message || 'Gagal memeriksa pembaruan');
       }
@@ -558,15 +562,18 @@ export const KanbanProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       if (status === 'available') {
         setUpdateInfo(data || null);
         setUpdaterStatus('available');
-        if (data?.version !== settingsRef.current.ignoredUpdateVersion) {
+        if (isManualCheckRef.current || data?.version !== settingsRef.current.ignoredUpdateVersion) {
           setIsUpdateModalOpen(true);
         }
+        isManualCheckRef.current = false;
       } else if (status === 'not-available') {
+        isManualCheckRef.current = false;
         setUpdaterStatus('not-available');
       } else if (status === 'downloaded') {
         setUpdaterStatus('downloaded');
         setIsUpdateModalOpen(true);
       } else if (status === 'error') {
+        isManualCheckRef.current = false;
         setUpdaterStatus('error');
         setUpdateErrorMessage(data?.message || String(data || 'Pembaruan gagal'));
       } else {

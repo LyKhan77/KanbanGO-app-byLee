@@ -142,9 +142,24 @@ describe('KanbanContext Updater State', () => {
     });
     expect(result.current.isUpdateModalOpen).toBe(false);
 
-    // Simulate same version available again - modal should remain closed
+    // Simulate same version available again in background - modal should remain closed
     act(() => {
       statusCallback?.('available', { version: '1.2.0' });
+    });
+    expect(result.current.isUpdateModalOpen).toBe(false);
+
+    // When manual check is performed, modal SHOULD open even for the ignored version
+    await act(async () => {
+      await result.current.checkForUpdates(true);
+    });
+    act(() => {
+      statusCallback?.('available', { version: '1.2.0' });
+    });
+    expect(result.current.isUpdateModalOpen).toBe(true);
+
+    // Close modal
+    act(() => {
+      result.current.closeUpdateModal();
     });
     expect(result.current.isUpdateModalOpen).toBe(false);
 
