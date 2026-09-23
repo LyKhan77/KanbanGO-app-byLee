@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
+import { createUpdaterBridge } from './updaterBridge';
 
 export const electronAPI = {
   ping: (): Promise<string> => ipcRenderer.invoke('ping'),
@@ -20,7 +21,8 @@ export const electronAPI = {
   showSaveBackupDialog: (defaultFileName: string): Promise<string | null> =>
     ipcRenderer.invoke('dialog:saveBackup', defaultFileName),
   showOpenBackupDialog: (): Promise<string | null> =>
-    ipcRenderer.invoke('dialog:openBackup')
+    ipcRenderer.invoke('dialog:openBackup'),
+  updater: createUpdaterBridge(ipcRenderer)
 };
 
 if (process.contextIsolated) {
