@@ -53,6 +53,7 @@ KanbanGo2/
 │   └── superpowers/
 │       ├── plans/               # Catatan rencana implementasi teknis
 │       └── specs/               # Spesifikasi desain dan arsitektur fitur
+├── resources/                   # Aset branding resmi (icon.png 512x512, icon-16, icon-32)
 ├── src/
 │   ├── main/                    # Electron Main Process (Node.js)
 │   │   ├── index.ts             # Siklus hidup app, BrowserWindow, IPC window controls

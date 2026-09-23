@@ -10,6 +10,12 @@ dan proyek ini menganut standar [Semantic Versioning (SemVer)](https://semver.or
 ## [1.0.1] - 2026-09-23
 
 ### Added
+- **Official Brand Identity & App Icon:**
+  - Integrasi berkas ikon resmi `resources/icon.png` (512x512) berestetika daun Bohemian modern sebagai sumber aset tunggal (*single source of truth*).
+  - Konfigurasi `buildResources` dan multi-platform packaging icons (Windows `.ico`, macOS `.icns`, Linux `.png`) di `package.json`.
+  - Integrasi ikon pada jendela `BrowserWindow` di Electron Main Process dan System Tray dengan fallback buffer cerdas.
+  - Integrasi logo resmi pada komponen React `WindowHeader` dan favicon `index.html`.
+  - Penyimpanan berkas tangkapan layar presentasi aplikasi resolusi tinggi di folder `temp/`.
 - Penambahan kontrol `concurrency` pada alur kerja GitHub Actions (`.github/workflows/release.yml`) untuk mencegah eksekusi rilis yang tumpang tindih (*race condition*).
 - Penambahan field `maintainer` eksplisit pada konfigurasi packaging Linux di `package.json`.
 - Penguatan keamanan (*security hardening*) di Electron Main Process: mengaktifkan `sandbox: true`, memvalidasi protokol URL eksternal (`https:` dan `http:` saja), serta menambahkan listener `will-navigate` untuk mencegah navigasi ke domain asing.

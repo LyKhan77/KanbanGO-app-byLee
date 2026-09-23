@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="resources/icon.png" width="120" height="120" alt="KanbanGO! Logo" />
+</p>
+
 # KanbanGO! 🌿
 
 > **Offline-first Desktop Kanban Application with Bohemian Aesthetic & Hardcore Persona Assistant.**

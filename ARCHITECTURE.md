@@ -43,11 +43,11 @@ Berjalan di lingkungan Node.js dengan akses penuh ke sistem operasi.
 
 - **`index.ts`**:
   - Mengatur siklus hidup aplikasi (`app.on('ready')`, `window-all-closed`, `before-quit`).
-  - Menginisialisasi jendela utama frameless (`BrowserWindow`) dengan opsi `titleBarStyle: 'hidden'`.
+  - Menginisialisasi jendela utama frameless (`BrowserWindow`) dengan opsi `titleBarStyle: 'hidden'` dan ikon aplikasi resmi (`resources/icon.png`).
   - Menangani event IPC untuk kontrol jendela (`window:minimize`, `window:maximize`, `window:close`).
   - Menerapkan mekanisme **close-to-tray**: ketika pengguna mengklik tombol tutup [X], jendela disembunyikan ke System Tray kecuali jika aplikasi sedang dalam proses keluar resmi (`isQuitting = true`).
 - **`tray.ts`**:
-  - Mengelola ikon System Tray, menu konteks baki (Buka KanbanGO, Tambah Kartu Cepat, Keluar), dan interaksi klik baki.
+  - Mengelola ikon System Tray dengan `getAppTrayIcon()` yang memuat biner 16x16 / 32x32 dari `resources/` dengan fallback buffer base64, menu konteks baki (Buka KanbanGO!, Picu Hardcore Reminder, Keluar), dan interaksi klik baki.
 - **`notification.ts`**:
   - Menangani IPC `notification:show` untuk memicu notifikasi native sistem operasi dengan ikon aplikasi.
 - **`updater.ts`**:
