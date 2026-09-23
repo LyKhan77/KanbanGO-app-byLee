@@ -21,8 +21,8 @@
     },
     "publish": {
       "provider": "github",
-      "owner": "KanbanGO",
-      "repo": "KanbanGo2",
+      "owner": "LyKhan77",
+      "repo": "KanbanGO-app-byLee",
       "releaseType": "release"
     },
     "files": [
