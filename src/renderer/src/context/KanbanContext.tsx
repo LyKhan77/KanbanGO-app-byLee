@@ -1,7 +1,20 @@
 import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { db } from '../db/db';
 import { seedInitialData } from '../db/seed';
-import { Board, Column, Card, ChecklistItem, UserProfile, AssistantConfig, BoardViewMode, CardCoverColor } from '../../../shared/types';
+import {
+  Board,
+  Column,
+  Card,
+  ChecklistItem,
+  UserProfile,
+  AssistantConfig,
+  UserSettings,
+  BoardViewMode,
+  CardCoverColor,
+  UpdaterStatus,
+  UpdateInfo,
+  UpdateProgress
+} from '../../../shared/types';
 import { shouldTriggerDailyBriefing, getTodayDateString, getCurrentTimeString } from '../utils/scheduler';
 import { generateDailyBriefing } from '../utils/assistantEngine';
 import { resolveNextActiveTab, reorderTabs } from '../utils/tabUtils';
@@ -15,12 +28,25 @@ interface KanbanContextType {
   checklists: ChecklistItem[];
   profile: UserProfile;
   assistantConfig: AssistantConfig;
+  settings: UserSettings;
   isSidebarCollapsed: boolean;
   isProfileModalOpen: boolean;
   searchQuery: string;
   selectedPriority: string;
   selectedTag: string;
   viewMode: BoardViewMode;
+  updaterStatus: UpdaterStatus;
+  updateInfo: UpdateInfo | null;
+  updateProgress: UpdateProgress | null;
+  isUpdateModalOpen: boolean;
+  updateErrorMessage: string | null;
+  currentAppVersion: string;
+  checkForUpdates: (manual?: boolean) => Promise<void>;
+  startAppUpdate: () => Promise<void>;
+  installAppUpdate: () => Promise<void>;
+  ignoreUpdateVersion: (version: string) => Promise<void>;
+  openUpdateModal: () => void;
+  closeUpdateModal: () => void;
   setViewMode: (mode: BoardViewMode) => Promise<void>;
   reorderBoardTabs: (sourceIndex: number, destIndex: number) => Promise<void>;
   updateCardDueDate: (cardId: string, dueDate?: string) => Promise<void>;
@@ -78,6 +104,17 @@ export const KanbanProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const [checklists, setChecklists] = useState<ChecklistItem[]>([]);
   const [profile, setProfile] = useState<UserProfile>(DEFAULT_PROFILE);
   const [assistantConfig, setAssistantConfig] = useState<AssistantConfig>(DEFAULT_ASSISTANT);
+  const [settings, setSettings] = useState<UserSettings>({
+    id: 'default',
+    profile: DEFAULT_PROFILE,
+    assistant: DEFAULT_ASSISTANT
+  });
+  const [updaterStatus, setUpdaterStatus] = useState<UpdaterStatus>('idle');
+  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
+  const [updateProgress, setUpdateProgress] = useState<UpdateProgress | null>(null);
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [updateErrorMessage, setUpdateErrorMessage] = useState<string | null>(null);
+  const [currentAppVersion, setCurrentAppVersion] = useState('1.0.0');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -87,22 +124,27 @@ export const KanbanProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const [isInitialized, setIsInitialized] = useState(false);
 
   const refreshData = async () => {
-    await seedInitialData(db);
+    try {
+      await seedInitialData(db);
+    } catch {
+      // Ignore concurrent seed race condition
+    }
     const rawBoards = await db.boards.toArray();
     const allBoards = rawBoards.filter((b) => !b.isArchived).sort((a, b) => a.createdAt - b.createdAt);
     setBoards(allBoards);
 
-    const settings = await db.settings.get('default');
-    if (settings) {
-      if (settings.profile) setProfile(settings.profile);
-      if (settings.assistant) setAssistantConfig(settings.assistant);
+    const savedSettings = await db.settings.get('default');
+    if (savedSettings) {
+      setSettings(savedSettings);
+      if (savedSettings.profile) setProfile(savedSettings.profile);
+      if (savedSettings.assistant) setAssistantConfig(savedSettings.assistant);
     }
-    setViewModeState(settings?.activeViewMode || 'kanban');
+    setViewModeState(savedSettings?.activeViewMode || 'kanban');
 
-    const rawOpenIds = settings?.openBoardIds || [];
+    const rawOpenIds = savedSettings?.openBoardIds || [];
     const validOpenIds = rawOpenIds.filter((id) => allBoards.some((b) => b.id === id));
-    const effectiveActiveId = (settings?.activeBoardId && allBoards.some((b) => b.id === settings.activeBoardId))
-      ? settings.activeBoardId
+    const effectiveActiveId = (savedSettings?.activeBoardId && allBoards.some((b) => b.id === savedSettings.activeBoardId))
+      ? savedSettings.activeBoardId
       : (allBoards.length > 0 ? allBoards[0].id : null);
 
     let finalOpenIds = validOpenIds;
@@ -117,7 +159,7 @@ export const KanbanProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   };
 
   useEffect(() => {
-    refreshData();
+    refreshData().catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -139,11 +181,12 @@ export const KanbanProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       setChecklists(chks);
     };
 
-    loadBoardDetails();
+    loadBoardDetails().catch(() => {});
   }, [activeBoardId]);
 
   const setActiveBoardId = async (id: string) => {
     setActiveBoardIdState(id);
+    setSettings((prev) => ({ ...prev, activeBoardId: id }));
     const existing = await db.settings.get('default');
     if (existing) {
       await db.settings.update('default', { activeBoardId: id });
@@ -152,6 +195,7 @@ export const KanbanProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
   const setViewMode = async (mode: BoardViewMode) => {
     setViewModeState(mode);
+    setSettings((prev) => ({ ...prev, activeViewMode: mode }));
     await db.settings.update('default', { activeViewMode: mode });
   };
 
@@ -162,6 +206,7 @@ export const KanbanProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       : [...openBoardIds, boardId];
     setOpenBoardIds(updated);
     setActiveBoardIdState(boardId);
+    setSettings((prev) => ({ ...prev, openBoardIds: updated, activeBoardId: boardId }));
     await db.settings.update('default', { openBoardIds: updated, activeBoardId: boardId });
   };
 
@@ -170,6 +215,11 @@ export const KanbanProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     const { updatedTabs, nextActiveId } = resolveNextActiveTab(openBoardIds, boardId, activeBoardId);
     setOpenBoardIds(updatedTabs);
     setActiveBoardIdState(nextActiveId);
+    setSettings((prev) => ({
+      ...prev,
+      openBoardIds: updatedTabs,
+      activeBoardId: nextActiveId || undefined
+    }));
     await db.settings.update('default', {
       openBoardIds: updatedTabs,
       activeBoardId: nextActiveId || undefined
@@ -190,6 +240,7 @@ export const KanbanProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     openBoardIdsRef.current = updated;
     setOpenBoardIds(updated);
     if (updated.length > 0) {
+      setSettings((prev) => ({ ...prev, openBoardIds: updated }));
       await db.settings.update('default', { openBoardIds: updated });
     }
   };
@@ -421,6 +472,7 @@ export const KanbanProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const updateProfile = async (updates: Partial<UserProfile>) => {
     const updated = { ...profile, ...updates };
     setProfile(updated);
+    setSettings((prev) => ({ ...prev, profile: updated }));
     const existing = await db.settings.get('default');
     if (existing) {
       await db.settings.update('default', { profile: updated });
@@ -432,9 +484,116 @@ export const KanbanProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     const existing = await db.settings.get('default');
     if (existing) {
       const mergedAssistant = { ...(existing.assistant || DEFAULT_ASSISTANT), ...updates };
+      setSettings((prev) => ({ ...prev, assistant: mergedAssistant }));
       await db.settings.update('default', { assistant: mergedAssistant });
     }
   };
+
+  const checkForUpdates = async (manual = false) => {
+    setUpdaterStatus('checking');
+    setUpdateErrorMessage(null);
+    if (window.electronAPI?.updater) {
+      try {
+        await window.electronAPI.updater.check(manual);
+      } catch (err: any) {
+        setUpdaterStatus('error');
+        setUpdateErrorMessage(err?.message || 'Gagal memeriksa pembaruan');
+      }
+    }
+  };
+
+  const startAppUpdate = async () => {
+    setUpdaterStatus('downloading');
+    if (window.electronAPI?.updater) {
+      try {
+        await window.electronAPI.updater.startDownload();
+      } catch (err: any) {
+        setUpdaterStatus('error');
+        setUpdateErrorMessage(err?.message || 'Gagal mengunduh pembaruan');
+      }
+    }
+  };
+
+  const installAppUpdate = async () => {
+    if (window.electronAPI?.updater) {
+      try {
+        await window.electronAPI.updater.quitAndInstall();
+      } catch (err: any) {
+        setUpdaterStatus('error');
+        setUpdateErrorMessage(err?.message || 'Gagal memasang pembaruan');
+      }
+    }
+  };
+
+  const ignoreUpdateVersion = async (version: string) => {
+    setSettings((prev) => ({ ...prev, ignoredUpdateVersion: version }));
+    setIsUpdateModalOpen(false);
+    const existing = await db.settings.get('default');
+    if (existing) {
+      await db.settings.update('default', { ignoredUpdateVersion: version });
+    } else {
+      await db.settings.put({ id: 'default', ignoredUpdateVersion: version });
+    }
+  };
+
+  const openUpdateModal = () => setIsUpdateModalOpen(true);
+  const closeUpdateModal = () => setIsUpdateModalOpen(false);
+
+  const settingsRef = useRef(settings);
+  useEffect(() => {
+    settingsRef.current = settings;
+  }, [settings]);
+
+  useEffect(() => {
+    if (!window.electronAPI?.updater) return;
+
+    window.electronAPI.updater
+      .getCurrentVersion()
+      .then((v) => {
+        if (v) setCurrentAppVersion(v);
+      })
+      .catch(console.error);
+
+    const unsubscribeStatus = window.electronAPI.updater.onStatus((status, data) => {
+      if (status === 'available') {
+        setUpdateInfo(data || null);
+        setUpdaterStatus('available');
+        if (data?.version !== settingsRef.current.ignoredUpdateVersion) {
+          setIsUpdateModalOpen(true);
+        }
+      } else if (status === 'not-available') {
+        setUpdaterStatus('not-available');
+      } else if (status === 'downloaded') {
+        setUpdaterStatus('downloaded');
+        setIsUpdateModalOpen(true);
+      } else if (status === 'error') {
+        setUpdaterStatus('error');
+        setUpdateErrorMessage(data?.message || String(data || 'Pembaruan gagal'));
+      } else {
+        setUpdaterStatus(status);
+      }
+    });
+
+    const unsubscribeProgress = window.electronAPI.updater.onProgress((progress) => {
+      setUpdateProgress(progress);
+    });
+
+    const timeoutId = setTimeout(() => {
+      if (window.electronAPI?.updater) {
+        window.electronAPI.updater.check(false).catch(console.error);
+      }
+    }, 2000);
+
+    return () => {
+      clearTimeout(timeoutId);
+      if (typeof unsubscribeStatus === 'function') {
+        unsubscribeStatus();
+      }
+      if (typeof unsubscribeProgress === 'function') {
+        unsubscribeProgress();
+      }
+    };
+  }, []);
 
   const dispatchBriefingNotification = (
     profile: UserProfile,
@@ -513,6 +672,19 @@ export const KanbanProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         checklists,
         profile,
         assistantConfig,
+        settings,
+        updaterStatus,
+        updateInfo,
+        updateProgress,
+        isUpdateModalOpen,
+        updateErrorMessage,
+        currentAppVersion,
+        checkForUpdates,
+        startAppUpdate,
+        installAppUpdate,
+        ignoreUpdateVersion,
+        openUpdateModal,
+        closeUpdateModal,
         isSidebarCollapsed,
         isProfileModalOpen,
         searchQuery,
