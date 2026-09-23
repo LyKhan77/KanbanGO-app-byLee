@@ -1,12 +1,14 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useContext } from 'react';
 import { Board, Card } from '../../../shared/types';
-import { Search, Layout, CheckSquare, Plus, Download, Upload, User, Calendar } from 'lucide-react';
+import { Search, Layout, CheckSquare, Plus, Download, Upload, User, Calendar, RefreshCw } from 'lucide-react';
+import { KanbanContext } from '../../context/KanbanContext';
 
 export interface CommandItem {
   id: string;
   type: 'board' | 'card' | 'action';
   title: string;
   subtitle?: string;
+  category?: string;
   icon: React.ReactNode;
   action: () => void;
 }
@@ -39,6 +41,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   onSelectCard,
   onQuickAction
 }) => {
+  const kanban = useContext(KanbanContext);
+  const checkForUpdates = kanban?.checkForUpdates ?? (() => Promise.resolve());
+
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -166,6 +171,18 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         }
       },
       {
+        id: 'check-updates',
+        type: 'action',
+        title: 'Periksa Pembaruan Versi',
+        subtitle: 'Periksa ketersediaan pembaruan aplikasi terbaru',
+        category: 'Aplikasi',
+        icon: <RefreshCw className="w-4 h-4 text-terracotta" />,
+        action: () => {
+          checkForUpdates(true);
+          onClose();
+        }
+      },
+      {
         id: 'action-profile',
         type: 'action',
         title: 'Buka Profil & Asisten',
@@ -182,9 +199,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       (a) =>
         !cleanQuery ||
         a.title.toLowerCase().includes(cleanQuery) ||
-        a.subtitle?.toLowerCase().includes(cleanQuery)
+        a.subtitle?.toLowerCase().includes(cleanQuery) ||
+        a.category?.toLowerCase().includes(cleanQuery)
     );
-  }, [cleanQuery, onQuickAction, onClose]);
+  }, [cleanQuery, onQuickAction, onClose, checkForUpdates]);
 
   const allItems: CommandItem[] = useMemo(
     () => [...matchingBoards, ...matchingCards, ...quickActions],
