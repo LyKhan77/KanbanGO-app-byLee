@@ -20,8 +20,10 @@
     "appId": "com.kanbango.app",
     "productName": "KanbanGO!",
     "directories": {
-      "output": "dist"
+      "output": "dist",
+      "buildResources": "resources"
     },
+    "icon": "resources/icon.png",
     "publish": {
       "provider": "github",
       "owner": "LyKhan77",
@@ -29,9 +31,11 @@
       "releaseType": "release"
     },
     "files": [
-      "out/**/*"
+      "out/**/*",
+      "resources/**/*"
     ],
     "win": {
+      "icon": "resources/icon.png",
       "target": [
         {
           "target": "nsis",
@@ -55,6 +59,7 @@
       "shortcutName": "KanbanGO!"
     },
     "mac": {
+      "icon": "resources/icon.png",
       "target": [
         "dmg",
         "zip"
@@ -62,6 +67,7 @@
       "category": "public.app-category.productivity"
     },
     "linux": {
+      "icon": "resources/icon.png",
       "target": [
         "AppImage",
         "deb"
