@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useKanban } from '../../context/KanbanContext';
-import { Minus, Square, X, Feather, Plus, Layout } from 'lucide-react';
+import { Minus, Square, X, Plus, Layout } from 'lucide-react';
+import brandIcon from '../../assets/icon.png';
 
 export interface WindowHeaderProps {
   onOpenCommandPalette?: () => void;
@@ -56,8 +57,8 @@ export const WindowHeader: React.FC<WindowHeaderProps> = ({ onOpenCommandPalette
       <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
         {/* Brand Icon & Name (draggable) */}
         <div className="flex items-center gap-1.5 shrink-0 pr-2 border-r border-boho-canvas/60">
-          <div className="w-5 h-5 rounded-full bg-terracotta/20 flex items-center justify-center text-terracotta">
-            <Feather className="w-3.5 h-3.5" />
+          <div className="w-5 h-5 rounded-md overflow-hidden flex items-center justify-center bg-boho-sand/40 border border-boho-canvas/50 shadow-xs">
+            <img src={brandIcon} alt="KanbanGO! Logo" className="w-4 h-4 object-contain" />
           </div>
           <span className="font-serif font-bold text-boho-espresso tracking-wide text-xs">
             KanbanGO!
