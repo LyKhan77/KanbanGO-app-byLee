@@ -10,6 +10,7 @@ build/
 
 # Testing & Coverage
 coverage/
+temp/
 
 # Logs
 *.log
