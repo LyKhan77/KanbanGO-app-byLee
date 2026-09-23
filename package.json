@@ -3,7 +3,10 @@
   "version": "1.0.0",
   "description": "Offline-first Kanban Desktop App with Bohemian Aesthetic & Hardcore Assistant",
   "main": "./out/main/index.js",
-  "author": "KanbanGO Team",
+  "author": {
+    "name": "KanbanGO Team",
+    "email": "kanbango.team@gmail.com"
+  },
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",
@@ -63,7 +66,8 @@
         "AppImage",
         "deb"
       ],
-      "category": "Office"
+      "category": "Office",
+      "maintainer": "KanbanGO Team <kanbango.team@gmail.com>"
     }
   },
   "dependencies": {
