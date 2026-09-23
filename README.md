@@ -76,27 +76,38 @@ Unduh installer versi terbaru langsung dari halaman rilis resmi:
 | **Linux** | `KanbanGO-1.0.1-linux.AppImage` | Berkas executable universal Linux (`chmod +x`) |
 | | `KanbanGO-1.0.1-linux.deb` | Paket instalasi Debian / Ubuntu |
 
-### 🍏 Catatan Khusus Pengguna macOS (Gatekeeper)
+### 🍏 Catatan Khusus Pengguna macOS (Gatekeeper & Apple Silicon)
 
-Jika Anda melihat peringatan seperti *"KanbanGO cannot be opened because Apple cannot check it for malicious software"* atau *"Move to Bin"*, hal ini adalah perilaku standar sistem keamanan **macOS Gatekeeper** untuk aplikasi open-source independen yang belum memiliki sertifikat berbayar Apple Developer ID.
+Jika Anda melihat peringatan seperti *"KanbanGO! cannot be opened because Apple cannot check it for malicious software"* atau *"Malware Blocked and moved to bin"*, hal ini adalah perilaku standar sistem keamanan **macOS Gatekeeper & XProtect** untuk aplikasi open-source independen yang belum memiliki sertifikat komersial berbayar Apple Developer ID ($99/tahun).
 
-Aplikasi ini 100% aman dan bebas malware. Gunakan salah satu cara mudah berikut untuk membukanya:
+Aplikasi ini **100% aman, privat, dan bebas malware**. Ikuti langkah terverifikasi berikut untuk membukanya di Mac Anda:
 
-1. **Cara Cepat via Terminal (Direkomendasikan):**
-   Buka **Terminal** di Mac Anda dan jalankan perintah:
-   ```bash
-   xattr -cr /Applications/KanbanGO.app
+1. **Pastikan Aplikasi Berada di Folder `/Applications`:**
+   Geser berkas **`KanbanGO!.app`** dari jendela `.dmg` ke dalam folder **Applications** (atau jika sempat dipindahkan ke Trash oleh macOS, buka Trash lalu klik kanan dan pilih **Put Back**).
+
+2. **Jalankan Perintah Verifikasi di Terminal:**
+   Buka aplikasi **Terminal** di Mac Anda, lalu salin dan jalankan kedua perintah berikut:
+   ```zsh
+   # 1. Sign ulang secara ad-hoc menggunakan identitas Mac lokal Anda:
+   sudo codesign --force --deep --sign - '/Applications/KanbanGO!.app'
+
+   # 2. Hapus atribut karantina unduhan internet:
+   sudo xattr -cr '/Applications/KanbanGO!.app'
    ```
-   *(Perintah ini melepas flag karantina unduhan browser, setelah itu aplikasi dapat diklik dan dibuka langsung selamanya).*
+   *(Ketik kata sandi Mac Anda saat diminta di Terminal lalu tekan Enter).*
 
-2. **Cara via System Settings (Pengaturan Sistem):**
-   - Buka **System Settings** ➔ pilih **Privacy & Security** (Privasi & Keamanan).
-   - Gulir ke bawah ke bagian **Security**, Anda akan melihat pemberitahuan tentang KanbanGO.
-   - Klik tombol **"Open Anyway"** (Tetap Buka), masukkan password Mac / Touch ID Anda, lalu klik **"Open"**.
+3. **Buka Aplikasi:**
+   ```zsh
+   open '/Applications/KanbanGO!.app'
+   ```
+   *(Atau klik dua kali ikon **KanbanGO!** di folder Applications seperti biasa).*
 
-3. **Cara via Klik Kanan di Finder:**
-   - Buka folder **Applications** di Finder.
-   - Tahan tombol **Control** lalu klik ikon **KanbanGO** (atau klik kanan) ➔ pilih **Open** ➔ klik **Open** pada kotak dialog.
+> [!TIP]
+> **Alternatif Eksekusi Langsung:**  
+> Anda juga dapat menjalankan biner aplikasi secara langsung melalui Terminal untuk membukanya:
+> ```zsh
+> '/Applications/KanbanGO!.app/Contents/MacOS/KanbanGO!'
+> ```
 
 ---
 

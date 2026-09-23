@@ -12,6 +12,8 @@ dan proyek ini menganut standar [Semantic Versioning (SemVer)](https://semver.or
 ### Added
 - Penambahan kontrol `concurrency` pada alur kerja GitHub Actions (`.github/workflows/release.yml`) untuk mencegah eksekusi rilis yang tumpang tindih (*race condition*).
 - Penambahan field `maintainer` eksplisit pada konfigurasi packaging Linux di `package.json`.
+- Penguatan keamanan (*security hardening*) di Electron Main Process: mengaktifkan `sandbox: true`, memvalidasi protokol URL eksternal (`https:` dan `http:` saja), serta menambahkan listener `will-navigate` untuk mencegah navigasi ke domain asing.
+- Dokumentasi panduan instalasi dan verifikasi lokal macOS Gatekeeper & Apple Silicon (*ad-hoc code signing*).
 
 ### Fixed
 - Memperbaiki kegagalan pengemasan paket Debian Linux (`.deb`) pada runner Ubuntu dengan mendefinisikan objek `author` yang memuat alamat email valid (`kanbango.team@gmail.com`).
