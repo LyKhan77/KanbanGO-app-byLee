@@ -48,10 +48,19 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
   const currentVerDisplay = `v${stripLeadingV(currentVersion) || '1.0.0'}`;
   const targetVerDisplay = `v${stripLeadingV(updateInfo?.version) || 'Terbaru'}`;
 
+  const rawNotes = updateInfo?.releaseNotes;
+  const normalizedNotes =
+    typeof rawNotes === 'string'
+      ? rawNotes
+      : Array.isArray(rawNotes)
+        ? (rawNotes as any[]).map((n) => (typeof n === 'string' ? n : n?.note || '')).join('\n\n')
+        : '';
+
   return (
     <div
       role="dialog"
       aria-modal="true"
+      aria-labelledby="update-modal-title"
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 overflow-y-auto animate-fadeIn select-none"
       onClick={onPostpone}
     >
@@ -66,7 +75,7 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
               <Sparkles className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-serif font-bold text-base text-boho-espresso">
+              <h3 id="update-modal-title" className="font-serif font-bold text-base text-boho-espresso">
                 {headerTitle}
               </h3>
               <div className="flex items-center gap-2 mt-1">
@@ -91,7 +100,7 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
         </div>
 
         {/* Release Notes Changelog */}
-        {updateInfo?.releaseNotes && (
+        {normalizedNotes && (
           <div className="mt-4 flex-1 flex flex-col min-h-0">
             <p className="text-[11px] font-semibold text-boho-clay uppercase tracking-wider mb-1.5">
               Catatan Rilis
@@ -99,7 +108,7 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
             <div className="overflow-y-auto max-h-56 p-3 bg-white/70 border border-[#e4ded5] rounded-xl text-xs text-boho-walnut space-y-1">
               <div
                 dangerouslySetInnerHTML={{
-                  __html: renderMarkdownToHtml(updateInfo.releaseNotes || '')
+                  __html: renderMarkdownToHtml(normalizedNotes)
                 }}
               />
             </div>
@@ -113,7 +122,13 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
               <span>Mengunduh pembaruan...</span>
               <span className="font-mono text-[#c26d5c]">{progress?.percent ?? 0}%</span>
             </div>
-            <div className="w-full h-2.5 bg-[#e4ded5] rounded-full overflow-hidden">
+            <div
+              role="progressbar"
+              aria-valuenow={Math.round(progress?.percent ?? 0)}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              className="w-full h-2.5 bg-[#e4ded5] rounded-full overflow-hidden"
+            >
               <div
                 className="h-full bg-[#c26d5c] transition-all duration-300 ease-out rounded-full"
                 style={{ width: `${Math.min(100, Math.max(0, progress?.percent || 0))}%` }}
@@ -135,7 +150,10 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
 
         {/* Error Banner */}
         {(status === 'error' || errorMessage) && (
-          <div className="mt-4 p-3 bg-red-50/80 border border-red-200 rounded-xl flex items-start gap-2.5 text-xs text-red-700">
+          <div
+            role="alert"
+            className="mt-4 p-3 bg-red-50/80 border border-red-200 rounded-xl flex items-start gap-2.5 text-xs text-red-700"
+          >
             <AlertCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
             <div className="flex-1">
               <p className="font-medium">Gagal memperbarui aplikasi</p>

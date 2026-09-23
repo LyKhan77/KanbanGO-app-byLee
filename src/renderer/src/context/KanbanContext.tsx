@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback, ReactNode } from 'react';
 import { db } from '../db/db';
 import { seedInitialData } from '../db/seed';
 import {
@@ -540,8 +540,8 @@ export const KanbanProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }
   };
 
-  const openUpdateModal = () => setIsUpdateModalOpen(true);
-  const closeUpdateModal = () => setIsUpdateModalOpen(false);
+  const openUpdateModal = useCallback(() => setIsUpdateModalOpen(true), []);
+  const closeUpdateModal = useCallback(() => setIsUpdateModalOpen(false), []);
 
   const settingsRef = useRef(settings);
   useEffect(() => {

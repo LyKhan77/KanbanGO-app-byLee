@@ -69,4 +69,56 @@ describe('UpdateModal Component', () => {
     fireEvent.click(installBtn);
     expect(defaultProps.onInstall).toHaveBeenCalled();
   });
+
+  it('returns null when isOpen is false', () => {
+    const { container } = render(<UpdateModal {...defaultProps} isOpen={false} />);
+    expect(container.firstChild).toBeNull();
+  });
+
+  it('triggers onPostpone when pressing Escape key', () => {
+    render(<UpdateModal {...defaultProps} />);
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(defaultProps.onPostpone).toHaveBeenCalled();
+  });
+
+  it('renders error alert when status is error or errorMessage is present', () => {
+    render(
+      <UpdateModal
+        {...defaultProps}
+        status="error"
+        errorMessage="Server rilis tidak dapat dijangkau"
+      />
+    );
+    const alert = screen.getByRole('alert');
+    expect(alert).toBeInTheDocument();
+    expect(screen.getByText(/Server rilis tidak dapat dijangkau/i)).toBeInTheDocument();
+  });
+
+  it('renders progress bar with proper aria attributes', () => {
+    render(
+      <UpdateModal
+        {...defaultProps}
+        status="downloading"
+        progress={{ percent: 42, bytesPerSecond: 500000, transferred: 2000000, total: 5000000 }}
+      />
+    );
+    const progressBar = screen.getByRole('progressbar');
+    expect(progressBar).toHaveAttribute('aria-valuenow', '42');
+    expect(progressBar).toHaveAttribute('aria-valuemin', '0');
+    expect(progressBar).toHaveAttribute('aria-valuemax', '100');
+  });
+
+  it('handles release notes when provided as an array', () => {
+    render(
+      <UpdateModal
+        {...defaultProps}
+        updateInfo={{
+          version: '1.2.0',
+          releaseNotes: [{ note: 'Catatan 1' }, { note: 'Catatan 2' }] as any
+        }}
+      />
+    );
+    expect(screen.getByText(/Catatan 1/)).toBeInTheDocument();
+    expect(screen.getByText(/Catatan 2/)).toBeInTheDocument();
+  });
 });
