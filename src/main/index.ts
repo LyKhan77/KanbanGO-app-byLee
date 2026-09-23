@@ -67,7 +67,14 @@ app.whenReady().then(() => {
   setupNotificationHandlers(ipcMain, () => mainWindow);
 
   // Auto Updater IPC Handlers & Listeners
-  setupAutoUpdater(ipcMain, () => mainWindow);
+  setupAutoUpdater(
+    ipcMain,
+    () => mainWindow,
+    undefined,
+    () => {
+      isQuitting = true;
+    }
+  );
 
   // Window Controls IPC
   ipcMain.on('window:minimize', () => {

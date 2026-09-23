@@ -2,26 +2,30 @@ import { app, IpcMain, BrowserWindow } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import { EventEmitter } from 'events';
 
-// Configure autoUpdater defaults safely (avoiding instantiation failure in non-Electron test environments)
-try {
-  autoUpdater.autoDownload = false;
-  autoUpdater.autoInstallOnAppQuit = false;
-} catch {
-  // When running inside Vitest/Node without full Electron runtime,
-  // accessing autoUpdater throws because electron.app is undefined.
-}
-
 export function setupAutoUpdater(
-  ipcMain: IpcMain | any,
-  getMainWindow: () => BrowserWindow | any | null,
-  customUpdater?: any
+  ipcMain: IpcMain,
+  getMainWindow: () => BrowserWindow | null,
+  customUpdater?: any,
+  onBeforeQuit?: () => void
 ): any {
-  const updater = customUpdater || autoUpdater;
+  let updater = customUpdater;
+  if (!updater) {
+    try {
+      updater = autoUpdater;
+    } catch {
+      // In vitest/unit test environments where electron.app is absent
+      updater = null;
+    }
+  }
 
-  // Ensure options are set if updater has them
+  // Ensure safe download & install options are set
   if (updater) {
-    updater.autoDownload = false;
-    updater.autoInstallOnAppQuit = false;
+    try {
+      updater.autoDownload = false;
+      updater.autoInstallOnAppQuit = false;
+    } catch {
+      // Ignore in non-electron runner
+    }
   }
 
   const sendToWindow = (channel: string, ...args: any[]): void => {
@@ -34,36 +38,41 @@ export function setupAutoUpdater(
     }
   };
 
-  updater.on('checking-for-update', (data?: any) => {
-    if (data !== undefined) {
-      sendToWindow('updater:status', 'checking', data);
-    } else {
-      sendToWindow('updater:status', 'checking');
-    }
-  });
+  if (updater && typeof updater.on === 'function') {
+    updater.on('checking-for-update', (data?: any) => {
+      if (data !== undefined) {
+        sendToWindow('updater:status', 'checking', data);
+      } else {
+        sendToWindow('updater:status', 'checking');
+      }
+    });
 
-  updater.on('update-available', (info: any) => {
-    sendToWindow('updater:status', 'available', info);
-  });
+    updater.on('update-available', (info: any) => {
+      sendToWindow('updater:status', 'available', info);
+    });
 
-  updater.on('update-not-available', (info: any) => {
-    sendToWindow('updater:status', 'not-available', info);
-  });
+    updater.on('update-not-available', (info: any) => {
+      sendToWindow('updater:status', 'not-available', info);
+    });
 
-  updater.on('download-progress', (progress: any) => {
-    sendToWindow('updater:progress', progress);
-  });
+    updater.on('download-progress', (progress: any) => {
+      sendToWindow('updater:progress', progress);
+    });
 
-  updater.on('update-downloaded', (info: any) => {
-    sendToWindow('updater:status', 'downloaded', info);
-  });
+    updater.on('update-downloaded', (info: any) => {
+      sendToWindow('updater:status', 'downloaded', info);
+    });
 
-  updater.on('error', (err: any) => {
-    sendToWindow('updater:status', 'error', err);
-  });
+    updater.on('error', (err: any) => {
+      sendToWindow('updater:status', 'error', err);
+    });
+  }
 
   ipcMain.handle('updater:check', async (_event: any, _manual?: boolean) => {
     try {
+      if (!updater || typeof updater.checkForUpdates !== 'function') {
+        return { error: 'Updater not available' };
+      }
       return await updater.checkForUpdates();
     } catch (error: any) {
       console.error('Failed to check for updates:', error);
@@ -73,6 +82,9 @@ export function setupAutoUpdater(
 
   ipcMain.handle('updater:startDownload', async () => {
     try {
+      if (!updater || typeof updater.downloadUpdate !== 'function') {
+        return { error: 'Updater not available' };
+      }
       return await updater.downloadUpdate();
     } catch (error: any) {
       console.error('Failed to download update:', error);
@@ -81,7 +93,18 @@ export function setupAutoUpdater(
   });
 
   ipcMain.handle('updater:quitAndInstall', async () => {
-    updater.quitAndInstall();
+    try {
+      if (onBeforeQuit) {
+        onBeforeQuit();
+      }
+      if (updater && typeof updater.quitAndInstall === 'function') {
+        updater.quitAndInstall();
+      }
+      return { success: true };
+    } catch (error: any) {
+      console.error('Failed to quit and install update:', error);
+      return { error: error?.message || String(error) };
+    }
   });
 
   ipcMain.handle('updater:getAppVersion', async () => {

@@ -69,14 +69,16 @@ describe('Main Process AutoUpdater Module', () => {
     });
   });
 
-  it('handles updater:startDownload and updater:quitAndInstall calls', async () => {
+  it('handles updater:startDownload and updater:quitAndInstall calls with onBeforeQuit', async () => {
     const mockUpdater = createMockUpdater();
-    setupAutoUpdater(mockIpcMain, () => mockWindow, mockUpdater);
+    const onBeforeQuit = vi.fn();
+    setupAutoUpdater(mockIpcMain, () => mockWindow, mockUpdater, onBeforeQuit);
 
     await handlers['updater:startDownload']();
     expect(mockUpdater.downloadUpdate).toHaveBeenCalled();
 
     await handlers['updater:quitAndInstall']();
+    expect(onBeforeQuit).toHaveBeenCalled();
     expect(mockUpdater.quitAndInstall).toHaveBeenCalled();
   });
 
