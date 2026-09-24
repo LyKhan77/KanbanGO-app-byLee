@@ -9,6 +9,15 @@ dan proyek ini menganut standar [Semantic Versioning (SemVer)](https://semver.or
 
 ## [1.0.3] - 2026-09-24
 
+### Added
+- **Official Web Landing Page (`landing/`):**
+  - Web showcase resmi berbasis Vite 5, React 18, TypeScript, dan Tailwind CSS 3 dengan estetika Bohemian Modern.
+  - Demo mini-board interaktif di browser dengan efek suara Web Audio API prosedural native (klik taktil, pergeseran kartu, dan denting penyelesaian tugas).
+  - Deteksi otomatis sistem operasi pengunjung (Windows, macOS, Linux) untuk tombol pengunduhan instan mengarah ke GitHub Releases v1.0.3.
+  - Pusat unduhan terstruktur untuk Windows (NSIS & Portable), macOS (DMG & ZIP) dengan panduan verifikasi Gatekeeper, serta Linux (AppImage & DEB).
+  - Komitmen privasi & transparansi open-source (Zero Analytics, Zero Telemetry, Zero Cookies).
+  - Konfigurasi `vercel.json` untuk deployment instan ke Vercel Edge CDN dengan SPA routing rewrites dan caching header aset statis.
+
 ### Fixed
 - **Valid Multi-Resolution Windows ICO Directory Structure:**
   - Merekonstruksi penuh berkas `resources/icon.ico` dengan 6 lapisan resolusi standar Windows (256, 128, 64, 48, 32, 16 px) dan struktur biner header direktori yang valid (`offset + size == fileSize`).

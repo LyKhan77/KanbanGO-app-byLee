@@ -88,7 +88,12 @@ KanbanGo2/
 │   │           └── markdown.ts  # Parser regex Markdown prosedural
 │   └── shared/
 │       └── types.ts             # Tipe TypeScript bersama (Board, Card, Column, Updater, dsb.)
-├── tests/                       # 30 berkas pengujian otomatis Vitest (201 tes)
+├── landing/                     # Web Landing Page resmi (Vite 5 + React 18 + Tailwind, siap Vercel)
+│   ├── public/                  # Aset statis (icon, favicon, real screenshots)
+│   ├── src/                     # Komponen UI (Navbar, Hero, Demo, Pillars, Download, Footer)
+│   ├── tests/                   # Pengujian unit (osDetector, audio)
+│   └── vercel.json              # Konfigurasi routing & caching Vercel Edge CDN
+├── tests/                       # 30 berkas pengujian otomatis Vitest desktop (202 tes)
 ├── AGENTS.md                    # Dokumen panduan pengembang & agen AI ini
 ├── ARCHITECTURE.md              # Rincian arsitektur teknis 3-tier sistem
 ├── CHANGELOG.md                 # Riwayat versi dan perubahan fitur
@@ -104,14 +109,17 @@ KanbanGo2/
 
 | Perintah | Deskripsi |
 | :--- | :--- |
-| `npm install` | Memasang seluruh dependensi Node.js lokal. |
-| `npm run dev` | Menjalankan aplikasi dalam mode pengembangan lokal (*HMR active*). |
-| `npm test` | Menjalankan seluruh 201+ pengujian otomatis menggunakan Vitest. |
-| `npx vitest run tests/<file>.test.ts` | Menjalankan satu berkas pengujian spesifik. |
-| `npm run build` | Mengompilasi bundel produksi untuk Main, Preload, dan Renderer. |
+| `npm install` | Memasang seluruh dependensi Node.js lokal desktop. |
+| `npm run dev` | Menjalankan aplikasi desktop dalam mode pengembangan lokal (*HMR active*). |
+| `npm test` | Menjalankan seluruh 202+ pengujian otomatis desktop menggunakan Vitest. |
+| `npx vitest run tests/<file>.test.ts` | Menjalankan satu berkas pengujian desktop spesifik. |
+| `npm run build` | Mengompilasi bundel produksi desktop untuk Main, Preload, dan Renderer. |
 | `npm run build:win` | Mengompilasi kode dan mengemas installer Windows (`.exe` NSIS & Portable). |
 | `npm run build:mac` | Mengompilasi kode dan mengemas aplikasi macOS (`.dmg` & `.zip`). |
 | `npm run build:linux` | Mengompilasi kode dan mengemas aplikasi Linux (`.AppImage` & `.deb`). |
+| `cd landing && npm run dev` | Menjalankan server pengembangan landing page di browser. |
+| `cd landing && npm test` | Menjalankan pengujian unit landing page (11 tes). |
+| `cd landing && npm run build` | Mengompilasi bundel produksi statis landing page untuk deploy Vercel. |
 
 ---
 
