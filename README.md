@@ -73,12 +73,12 @@ Unduh installer versi terbaru langsung dari halaman rilis resmi:
 
 | Sistem Operasi | Format Unduhan | Keterangan |
 | :--- | :--- | :--- |
-| **Windows** | `KanbanGO-Setup-1.0.1.exe` | Installer interaktif Windows standar (NSIS) |
-| | `KanbanGO-1.0.1.exe` | Portable executable (langsung jalan) |
-| **macOS** | `KanbanGO-1.0.1-mac.dmg` | Apple Disk Image (drag-and-drop ke Applications) |
-| | `KanbanGO-1.0.1-mac.zip` | Arsip aplikasi terkompresi |
-| **Linux** | `KanbanGO-1.0.1-linux.AppImage` | Berkas executable universal Linux (`chmod +x`) |
-| | `KanbanGO-1.0.1-linux.deb` | Paket instalasi Debian / Ubuntu |
+| **Windows** | `KanbanGO-Setup-1.0.2.exe` | Installer interaktif Windows standar (NSIS) |
+| | `KanbanGO-1.0.2.exe` | Portable executable (langsung jalan) |
+| **macOS** | `KanbanGO-1.0.2-mac.dmg` | Apple Disk Image (drag-and-drop ke Applications) |
+| | `KanbanGO-1.0.2-mac.zip` | Arsip aplikasi terkompresi |
+| **Linux** | `KanbanGO-1.0.2-linux.AppImage` | Berkas executable universal Linux (`chmod +x`) |
+| | `KanbanGO-1.0.2-linux.deb` | Paket instalasi Debian / Ubuntu |
 
 ### 🍏 Catatan Khusus Pengguna macOS (Gatekeeper & Apple Silicon)
 

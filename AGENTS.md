@@ -139,7 +139,7 @@ KanbanGo2/
 
 ## 8. Current State
 
-Status versi rilis saat ini adalah **`1.0.1`**.
+Status versi rilis saat ini adalah **`1.0.2`**.
 
 Rincian lengkap riwayat penambahan fitur, perbaikan bug, dan perubahan berkas dapat dilihat secara detail di:
 👉 **[`CHANGELOG.md`](file:///D:/Occupation/Porto/Project-LLM/Web-test/KanbanGo2/CHANGELOG.md)**

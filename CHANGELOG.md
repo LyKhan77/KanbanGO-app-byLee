@@ -7,6 +7,26 @@ dan proyek ini menganut standar [Semantic Versioning (SemVer)](https://semver.or
 
 ---
 
+## [1.0.2] - 2026-09-24
+
+### Added
+- **Official Bohemian Leaf Branding Identity:**
+  - Pembaruan menyeluruh aset visual resmi aplikasi (*official Bohemian Leaf branding logo*):
+    - Ikon resolusi tinggi 512x512 (`resources/icon.png`)
+    - Ikon multi-layer Windows executable & shortcut (`resources/icon.ico`)
+    - Ikon baki sistem (*system tray*) 16x16 dan 32x32 (`resources/icon-16.png`, `resources/icon-32.png`)
+    - Ikon antarmuka React pada WindowHeader (`src/renderer/src/assets/icon.png`)
+  - Dokumen presentasi komprehensif resmi aplikasi 12 slide lanskap A4 (`temp/KanbanGO_App_Presentation.pdf` dan `temp/presentation.html`) berbasis tangkapan layar asli aplikasi (*real application screenshots*).
+
+### Fixed
+- **Zero Type 3 PDF Pattern Optimization:**
+  - Mengganti seluruh karakter emoji dan glyph non-standar pada dokumen presentasi dengan pure vector inline SVG.
+  - Mengeliminasi gradien dan bayangan blur kompleks menjadi palet solid Bohemian, menyelesaikan error `pattern_p0_4` pada PDF.js viewer VS Code secara definitif.
+- **Pembaruan Dokumentasi Keamanan & Instalasi:**
+  - Memperbarui tautan rilis dan panduan instalasi macOS Gatekeeper & Apple Silicon ad-hoc code signing di `README.md`.
+
+---
+
 ## [1.0.1] - 2026-09-23
 
 ### Added
