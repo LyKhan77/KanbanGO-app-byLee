@@ -121,4 +121,35 @@ describe('UpdateModal Component', () => {
     expect(screen.getByText(/Catatan 1/)).toBeInTheDocument();
     expect(screen.getByText(/Catatan 2/)).toBeInTheDocument();
   });
+
+  it('renders smart macOS signature error card with copyable terminal command and DMG download link', () => {
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+
+    render(
+      <UpdateModal
+        {...defaultProps}
+        status="error"
+        errorMessage="Code signature at URL file:///Users/leekhan/Library/Caches/com.kanbango.app.ShipIt/update.h9POe6Q/KanbanGO!.app/ did not pass validation: code failed to satisfy specified code requirement(s)"
+      />
+    );
+
+    const alert = screen.getByRole('alert');
+    expect(alert).toBeInTheDocument();
+    expect(screen.getByText(/Pembaruan Otomatis Dibatasi Sistem Keamanan macOS/i)).toBeInTheDocument();
+    expect(screen.getByText(/sudo xattr -rd com.apple.quarantine/)).toBeInTheDocument();
+
+    const downloadDmgBtn = screen.getByRole('button', { name: /Unduh \.DMG Versi/i });
+    expect(downloadDmgBtn).toBeInTheDocument();
+    fireEvent.click(downloadDmgBtn);
+    expect(openSpy).toHaveBeenCalledWith(
+      expect.stringContaining('https://github.com/LyKhan77/KanbanGO-app-byLee/releases/tag/v1.1.0'),
+      '_blank'
+    );
+
+    const openReleaseBtn = screen.getByRole('button', { name: /Buka Rilis GitHub/i });
+    expect(openReleaseBtn).toBeInTheDocument();
+    fireEvent.click(openReleaseBtn);
+
+    openSpy.mockRestore();
+  });
 });

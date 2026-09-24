@@ -1,7 +1,7 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { UpdaterStatus, UpdateInfo, UpdateProgress } from '../../../shared/types';
 import { renderMarkdownToHtml } from '../../utils/markdown';
-import { Sparkles, AlertCircle, X } from 'lucide-react';
+import { Sparkles, AlertCircle, X, ExternalLink, Copy, Check } from 'lucide-react';
 
 export interface UpdateModalProps {
   isOpen: boolean;
@@ -28,6 +28,8 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
   onPostpone,
   onIgnoreVersion
 }) => {
+  const [copiedCommand, setCopiedCommand] = useState(false);
+
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -55,6 +57,33 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
       : Array.isArray(rawNotes)
         ? (rawNotes as any[]).map((n) => (typeof n === 'string' ? n : n?.note || '')).join('\n\n')
         : '';
+
+  const terminalCmd = `sudo xattr -rd com.apple.quarantine '/Applications/KanbanGO!.app'\nsudo codesign --force --deep --sign - '/Applications/KanbanGO!.app'`;
+
+  const isMacSignatureError = Boolean(
+    errorMessage &&
+      (/code signature/i.test(errorMessage) ||
+        /shipit/i.test(errorMessage) ||
+        /code requirement/i.test(errorMessage))
+  );
+
+  const targetVer = updateInfo?.version ? `v${updateInfo.version.replace(/^v/i, '')}` : 'latest';
+  const releaseUrl =
+    targetVer === 'latest'
+      ? 'https://github.com/LyKhan77/KanbanGO-app-byLee/releases/latest'
+      : `https://github.com/LyKhan77/KanbanGO-app-byLee/releases/tag/${targetVer}`;
+
+  const handleCopyCommand = () => {
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(terminalCmd);
+    }
+    setCopiedCommand(true);
+    setTimeout(() => setCopiedCommand(false), 2500);
+  };
+
+  const handleOpenReleaseUrl = () => {
+    window.open(releaseUrl, '_blank');
+  };
 
   return (
     <div
@@ -150,23 +179,111 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
 
         {/* Error Banner */}
         {(status === 'error' || errorMessage) && (
-          <div
-            role="alert"
-            className="mt-4 p-3 bg-red-50/80 border border-red-200 rounded-xl flex items-start gap-2.5 text-xs text-red-700"
-          >
-            <AlertCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <p className="font-medium">Gagal memperbarui aplikasi</p>
-              <p className="text-red-600 mt-0.5">
-                {errorMessage || 'Terjadi kesalahan saat memeriksa atau mengunduh pembaruan.'}
-              </p>
+          isMacSignatureError ? (
+            <div
+              role="alert"
+              className="mt-4 p-4 bg-[#fbf6ee] border border-[#e8dccb] rounded-2xl flex flex-col gap-3 text-xs text-boho-espresso"
+            >
+              <div className="flex items-start gap-2.5">
+                <div className="w-6 h-6 rounded-lg bg-amber-100 border border-amber-200 flex items-center justify-center text-amber-700 shrink-0 mt-0.5">
+                  <AlertCircle className="w-3.5 h-3.5" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-serif font-bold text-sm text-boho-espresso">
+                    Pembaruan Otomatis Dibatasi Sistem Keamanan macOS
+                  </p>
+                  <p className="text-boho-walnut mt-1 leading-relaxed text-[11.5px]">
+                    Sistem keamanan macOS (ShipIt) mewajibkan sertifikat komersial berbayar Apple Developer ID untuk penimpaan aplikasi secara otomatis. Sebagai aplikasi open-source independen, silakan unduh berkas <code>.dmg</code> versi terbaru secara manual untuk memperbarui. Data pekerjaan Anda tetap 100% aman.
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-white/80 border border-[#e4ded5] rounded-xl p-2.5 space-y-1.5">
+                <div className="flex items-center justify-between text-[11px] font-medium text-boho-clay">
+                  <span>Perintah Terminal Setelah Ganti Aplikasi:</span>
+                  <button
+                    type="button"
+                    onClick={handleCopyCommand}
+                    className="inline-flex items-center gap-1 text-[11px] text-[#c26d5c] hover:underline cursor-pointer"
+                  >
+                    {copiedCommand ? (
+                      <>
+                        <Check className="w-3 h-3 text-emerald-600" />
+                        <span className="text-emerald-600 font-medium">Tersalin!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3 h-3" />
+                        <span>Salin Perintah</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+                <pre className="font-mono text-[10px] text-boho-espresso bg-[#f3ede4] p-2 rounded-lg overflow-x-auto leading-normal select-all">
+                  {terminalCmd}
+                </pre>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                <span className="text-[11px] text-boho-clay">
+                  Data pekerjaan Anda tetap 100% aman tersimpan.
+                </span>
+                <button
+                  type="button"
+                  onClick={handleOpenReleaseUrl}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#c26d5c] hover:bg-[#b05d4d] text-white font-medium rounded-xl shadow-sm transition-colors text-xs"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  Unduh .DMG Versi {targetVerDisplay}
+                </button>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div
+              role="alert"
+              className="mt-4 p-3 bg-red-50/80 border border-red-200 rounded-xl flex items-start gap-2.5 text-xs text-red-700"
+            >
+              <AlertCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="font-medium">Gagal memperbarui aplikasi</p>
+                <p className="text-red-600 mt-0.5">
+                  {errorMessage || 'Terjadi kesalahan saat memeriksa atau mengunduh pembaruan.'}
+                </p>
+              </div>
+            </div>
+          )
         )}
 
         {/* Action Buttons */}
         <div className="mt-6 flex items-center justify-between gap-3 pt-3 border-t border-[#e4ded5]">
-          {status === 'available' ? (
+          {isMacSignatureError ? (
+            <div className="flex items-center justify-between w-full">
+              <button
+                type="button"
+                onClick={() => onIgnoreVersion(updateInfo?.version || '')}
+                className="text-xs text-boho-clay hover:text-[#c26d5c] hover:underline transition-colors"
+              >
+                Abaikan Versi Ini
+              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={onPostpone}
+                  className="px-3.5 py-1.5 text-xs font-medium text-boho-walnut bg-[#f3ede4] hover:bg-[#e9e1d5] border border-[#e4ded5] rounded-xl transition-colors"
+                >
+                  Tutup
+                </button>
+                <button
+                  type="button"
+                  onClick={handleOpenReleaseUrl}
+                  className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-medium text-white bg-[#c26d5c] hover:bg-[#b05d4d] rounded-xl shadow-sm transition-colors"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  Buka Rilis GitHub
+                </button>
+              </div>
+            </div>
+          ) : status === 'available' ? (
             <>
               <button
                 type="button"
