@@ -7,6 +7,17 @@ dan proyek ini menganut standar [Semantic Versioning (SemVer)](https://semver.or
 
 ---
 
+## [1.0.3] - 2026-09-24
+
+### Fixed
+- **Valid Multi-Resolution Windows ICO Directory Structure:**
+  - Merekonstruksi penuh berkas `resources/icon.ico` dengan 6 lapisan resolusi standar Windows (256, 128, 64, 48, 32, 16 px) dan struktur biner header direktori yang valid (`offset + size == fileSize`).
+  - Menyelesaikan kegagalan fatal `unable to read icon from file` pada utilitas `rcedit` dan pembuatan installer NSIS Windows.
+- **Clean Release Distribution Deployment:**
+  - Memigrasikan rilis resmi ke tag bersih `v1.0.3` untuk mengeliminasi konflik duplikasi berkas pada GitHub Releases (`HTTP 422 Unprocessable Entity`), memastikan seluruh paket rilis (Windows, macOS, Linux) terunggah serentak tanpa hambatan.
+
+---
+
 ## [1.0.2] - 2026-09-24
 
 ### Added
