@@ -37,3 +37,6 @@ Thumbs.db
 
 # Superpowers & Agent Artifacts
 .superpowers/
+
+# Playwright MCP session artifacts
+.playwright-mcp/

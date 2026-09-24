@@ -152,3 +152,17 @@ sequenceDiagram
 1. **Prinsip Nol Pelacak Cloud (Offline-First):** Seluruh data papan kerja, kartu, dan profil disimpan di IndexedDB lokal perangkat pengguna. Tidak ada data pribadi atau tugas yang dikirim ke server pihak ketiga.
 2. **Context Isolation & Sandbox:** Renderer Process berjalan dalam mode terisolasi tanpa akses langsung ke modul Node.js sistem (`nodeIntegration: false`, `contextIsolation: true`).
 3. **Pemberitahuan Transparan Pembaruan:** Pembaruan aplikasi tidak pernah diunduh atau dipasang secara diam-diam tanpa persetujuan eksplisit dari pengguna.
+
+---
+
+## 5. Web Landing Page & Distribusi Vercel (`landing/`)
+
+Untuk memfasilitasi pengunduhan installer dan memperkenalkan aplikasi kepada publik secara luas, repositori ini memuat sub-proyek web landing page terisolasi pada direktori `landing/`:
+
+- **Arsitektur Statis Murni (SSG/SPA):** Dibangun dengan Vite 5, React 18, TypeScript, dan Tailwind CSS 3 yang mandiri dari aplikasi Electron.
+- **Audio Sintetis Prosedural Web Audio API:** Menggunakan modul `src/utils/audio.ts` yang menginisialisasi osilator audio sintetis (sine wave) murni saat terjadi interaksi pengguna di peramban, tanpa aset audio luar.
+- **Deteksi Cerdas Sistem Operasi (`osDetector.ts`):** Mengidentifikasi `navigator.userAgent` secara reaktif untuk menyajikan tombol unduhan yang sesuai dengan sistem operasi pengunjung (Windows NSIS `.exe`, macOS `.dmg`, atau Linux `.AppImage`).
+- **Infrastruktur Edge CDN Vercel:** Dikonfigurasi melalui `vercel.json` dengan:
+  - SPA Rewrites: seluruh request dinavigasikan ke `/index.html`.
+  - Immutable Asset Caching: header `Cache-Control: public, max-age=31536000, immutable` untuk aset `dist/assets/*`.
+  - Zero Serverless Cost: deployment statis murni tanpa serverless function runtime.

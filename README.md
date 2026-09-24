@@ -8,7 +8,8 @@
 
 [![CI/CD Release](https://github.com/LyKhan77/KanbanGO-app-byLee/actions/workflows/release.yml/badge.svg)](https://github.com/LyKhan77/KanbanGO-app-byLee/actions)
 [![Latest Release](https://img.shields.io/github/v/release/LyKhan77/KanbanGO-app-byLee?color=c26d5c&label=Release)](https://github.com/LyKhan77/KanbanGO-app-byLee/releases/latest)
-[![Tests](https://img.shields.io/badge/Tests-201%20Passed-78866b?logo=vitest&logoColor=white)](https://github.com/LyKhan77/KanbanGO-app-byLee/actions)
+[![Landing Page](https://img.shields.io/badge/Landing%20Page-Vercel-c26d5c?logo=vercel&logoColor=white)](https://kanbango.vercel.app)
+[![Tests](https://img.shields.io/badge/Tests-202%20Passed-78866b?logo=vitest&logoColor=white)](https://github.com/LyKhan77/KanbanGO-app-byLee/actions)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-e4ded5)](https://github.com/LyKhan77/KanbanGO-app-byLee/releases)
 
 ---
@@ -63,6 +64,11 @@ Dilengkapi dengan **Asisten Persona Hardcore** cerdas, sistem tab multi-board ya
 - In-App Auto-Updater terintegrasi dengan GitHub Releases (`electron-updater`).
 - Pilihan pengguna yang ramah dan tidak memaksa: **[Perbarui Sekarang]**, **[Nanti Saja]**, dan **[Abaikan Versi Ini]**.
 - Paket rilis otomatis untuk Windows (`.exe` NSIS & Portable), macOS (`.dmg` & `.zip`), dan Linux (`.AppImage` & `.deb`).
+
+### 10. 🌐 Official Web Landing Page (`landing/`)
+- Showcase modern terisolasi berbasis Vite 5 + React 18 + Tailwind CSS yang siap di-deploy instan ke Vercel Edge CDN.
+- Demo mini-board interaktif di browser dengan sintesis efek suara Web Audio API prosedural.
+- Deteksi otomatis sistem operasi pengunjung untuk pengunduhan instan dan panduan verifikasi Gatekeeper macOS terintegrasi.
 
 ---
 
@@ -151,11 +157,11 @@ npm run dev
 
 ### Menjalankan Pengujian (Testing)
 ```bash
-# Menjalankan seluruh 201 pengujian otomatis
+# Menjalankan seluruh 202 pengujian otomatis aplikasi desktop
 npm test
 ```
 
-### Mengompilasi Build Produksi
+### Mengompilasi Build Produksi (Desktop)
 ```bash
 # Mengompilasi bundel Vite (Main, Preload, Renderer)
 npm run build
@@ -164,6 +170,15 @@ npm run build
 npm run build:win     # Windows (NSIS & Portable)
 npm run build:mac     # macOS (DMG & ZIP)
 npm run build:linux   # Linux (AppImage & DEB)
+```
+
+### Menjalankan Web Landing Page (`landing/`)
+```bash
+cd landing
+npm install
+npm run dev     # Jalankan dev server Vite (http://localhost:5173)
+npm test        # Jalankan pengujian unit landing page (11 tests)
+npm run build   # Kompilasi bundel statis untuk deploy Vercel
 ```
 
 ---
