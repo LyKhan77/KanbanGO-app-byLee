@@ -8,7 +8,7 @@
 
 [![CI/CD Release](https://github.com/LyKhan77/KanbanGO-app-byLee/actions/workflows/release.yml/badge.svg)](https://github.com/LyKhan77/KanbanGO-app-byLee/actions)
 [![Latest Release](https://img.shields.io/github/v/release/LyKhan77/KanbanGO-app-byLee?color=c26d5c&label=Release)](https://github.com/LyKhan77/KanbanGO-app-byLee/releases/latest)
-[![Landing Page](https://img.shields.io/badge/Landing%20Page-Vercel-c26d5c?logo=vercel&logoColor=white)](https://kanbango.vercel.app)
+[![Landing Page](https://img.shields.io/badge/Landing%20Page-Vercel-c26d5c?logo=vercel&logoColor=white)](https://kanbango-lp.vercel.app)
 [![Tests](https://img.shields.io/badge/Tests-202%20Passed-78866b?logo=vitest&logoColor=white)](https://github.com/LyKhan77/KanbanGO-app-byLee/actions)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-e4ded5)](https://github.com/LyKhan77/KanbanGO-app-byLee/releases)
 

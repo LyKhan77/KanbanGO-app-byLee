@@ -73,7 +73,6 @@ export default function FeatureShowcase() {
                       src={feature.screenshot}
                       alt={feature.alt}
                       className="w-full h-auto"
-                      loading="lazy"
                     />
                   </div>
                 </div>
